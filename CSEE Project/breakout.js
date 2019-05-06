@@ -49,11 +49,11 @@ for(var r=0; r<brickRowCount; r++) {
     console.log(setMargin(newColumn));
 
     for(var c=0; c<newColumn; c++) {
-        if (c === 0){
-            bricks[r][0] = { x: 0, y: 0, status: 1, type: getRandomType(), offset: setMargin(newColumn)};
+        if (c == 0){
+            bricks[r][0] = { x: 0, y: 0, status: 1, offset: setMargin(newColumn)};
         }
         else {
-            bricks[r][c] = { x: 0, y: 0, status: 1, type: getRandomType() };
+            bricks[r][c] = { x: 0, y: 0, status: 1 };
         }
 
     }
@@ -202,7 +202,7 @@ function drawBricks() {
                     bricks[r][c].y = brickY;
                     ctx.beginPath();
                     ctx.rect(brickX, brickY, brickWidth, brickHeight);
-                    ctx.fillStyle = bricks[r][c].type.color;
+                    ctx.fillStyle = "#0095DD";
                     ctx.fill();
                     ctx.closePath();
                 }
@@ -311,7 +311,6 @@ function draw() {
  * lower than max if max isn't an integer).
  * Using Math.round() will give you a non-uniform distribution!
  */
-//Get random ODD int from min to max
 function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -326,27 +325,7 @@ function getRandomInt(min, max) {
     }
     return randNum;
 }
-//Get random int from min to max
-function getRandomInt2(min, max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
 
-    console.log("Min: " + min);
-    console.log("Max: " + max);
-
-    var randNum = Math.floor(Math.random() * (max - min + 1)) + min;
-    return randNum;
-}
-function getRandomType() {
-    var types = [
-        {type: 0, color: "#ed2009"},
-        {type: 1, color: "#f4f407"},
-        {type: 2, color: "#80ef10"},
-        {type: 3, color: "#8c9188"},
-    ];
-    var index = getRandomInt2(0, types.length-1);
-    return types[index];
-}
 //    For random layout, check typeof element in the 2D array as "undefined" or not before proceeding to draw it
 //    Also, change column and row if possible
 //    Remove mouse mechanism if possible. It's too funny
