@@ -406,65 +406,47 @@ function Button(x, y, w, h, text, colors, clickCB) {
                     clickCB();
                     isClicking = true;
                 }
-            },
-            onClick: () => {
-                this.startGame();
             }
-        });
-
-        this.instructionsLabel = new Label(
-            "CLICK TO START!",
-            (this.frame.width / 2),
-            this.frame.height / 2,
-            "25px Arial",
-            "#42f445");
-
-        this.congratulationsLabel = new Label(
-            "YOU WIN!",
-            (this.frame.width / 2),
-            this.frame.height / 2,
-            "25px Arial",
-            "#4224f5");
-
-        this.gameOverLabel = new Label(
-            "GAME OVER!",
-            (this.frame.width / 2),
-            this.frame.height / 2,
-            "25px Arial",
-            "#FF2445");
-
-        this.loop();
-    }
-
-    startGame() {
-        this.game = new Game(this.frame, 3);
-    }
-
-    loop() {
-        this.ctx.clearRect(0, 0, this.frame.width, this.frame.height);
-
-        if (this.game) {
-            this.game.draw(this.ctx);
-            switch (this.game.state) {
-                case GameState.INIT:
-                    this.instructionsLabel.draw(this.ctx);
-                    break;
-                case GameState.WON:
-                    this.congratulationsLabel.draw(this.ctx);
-                    break;
-                case GameState.GAME_OVER:
-                    this.gameOverLabel.draw(this.ctx);
-                    break;
-                default:
-                // No-op
+            else {
+                isClicking = false;
             }
-        } else {
-            this.playButton.update(this.mousePosition, this.mousePressed);
-            this.playButton.draw(this.ctx);
         }
+        else {
+            this.state = 'default';
+        }
+    };
 
-        requestAnimationFrame(() => this.loop());
-    }
+    /**
+     * Draw the button.
+     */
+    this.draw = function() {
+        ctx.save();
+
+        var colors = this.colors[this.state];
+        var halfH = this.height / 2;
+
+        // button
+        ctx.fillStyle = colors.top;
+        ctx.fillRect(this.x, this.y, this.width, halfH);
+        ctx.fillStyle = colors.bottom;
+        ctx.fillRect(this.x, this.y + halfH, this.width, halfH);
+
+        // text
+        var size = ctx.measureText(this.text);
+        var x = this.x + (this.width - size.width) / 2;
+        var y = this.y + (this.height - 15) / 2 + 12;
+
+        ctx.fillStyle = '#FFF';
+        ctx.fillText(this.text, x, y);
+
+        ctx.restore();
+    };
 }
 
-new BreakoutApp();
+
+//To do list: Set random color and toughness
+
+
+//////////////////////////////////////////////////////////////////////////////////
+drawPlayBtn();
+//draw();
