@@ -23,7 +23,9 @@ var lives = 3;
 var gamePaused = true;
 var totalBricks = 0;
 var bricks = [];
-
+var brickSound;
+var metalSound;
+var backgroundMusic;
 
 function setMargin(column) {
     var offset;
@@ -142,8 +144,9 @@ function collisionDetection() {
             if (b!= null){
                 if(b.status == 1) {
                     var collisionPoint = checkBrickCollision(b);
-                    console.log(collisionPoint);
+                    //console.log(collisionPoint);
                     if(collisionPoint != false) {
+
                         if (collisionPoint == "left" || collisionPoint == "right"){
                             dx = -dx;
                         }
@@ -153,7 +156,7 @@ function collisionDetection() {
 
                         //console.log("Collided Brick Type: " + b.type)
                         if (b.Type.type != 4){ //check whether this is a nonbreakable brick
-
+                            brickSound.play();
                             b.Type.toughness--;
                             if (b.Type.toughness <=0 ){
                                 b.status = 0;
@@ -163,6 +166,9 @@ function collisionDetection() {
                                 alert("YOU WIN, CONGRATS!");
                                 document.location.reload();
                             }
+                        }
+                        else{
+                            metalSound.play();
                         }
 
                     }
@@ -335,6 +341,10 @@ function drawPlayBtn(){
 }
 function startGame(e){
     mousePressed = false;
+    backgroundMusic = new sound("./assets/sample.mp3");
+    backgroundMusic.play();
+    brickSound = new sound("./assets/brick.wav");
+    metalSound = new sound("./assets/metal.wav");
     draw();
     canvas.removeEventListener('mousedown', startGame);
     reset();
@@ -519,7 +529,21 @@ function Button(x, y, w, h, text, colors, clickCB) {
         ctx.restore();
     };
 }
-
+function sound(src) {
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+        console.log("inplay");
+        this.sound.play();
+    };
+    this.stop = function(){
+        this.sound.pause();
+    };
+}
 
 //To do list: Set random color and toughness
 

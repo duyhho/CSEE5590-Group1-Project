@@ -142,7 +142,6 @@ function collisionDetection() {
             if (b!= null){
                 if(b.status == 1) {
                     var collisionPoint = checkBrickCollision(b);
-                    console.log(collisionPoint);
                     if(collisionPoint != false) {
                         if (collisionPoint == "left" || collisionPoint == "right"){
                             dx = -dx;
@@ -155,6 +154,7 @@ function collisionDetection() {
                         if (b.Type.type != 4){ //check whether this is a nonbreakable brick
 
                             b.Type.toughness--;
+                            b.Type.path = getSpritePath(b.Type.type, true);
                             if (b.Type.toughness <=0 ){
                                 b.status = 0;
                             }
@@ -245,12 +245,20 @@ function checkWallCollision(){
         return "bottom-wall";
     }
 }
+function drawWall(){
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "black";
+}
 function drawBall() {
     ctx.beginPath();
     ctx.arc(x, y, ballRadius, 0, Math.PI*2);
     ctx.fillStyle = "#0095DD";
     ctx.fill();
     ctx.closePath();
+    var img = new Image();
+    img.src = "assets/redball.png";
+    ctx.drawImage(img, x-ballRadius, y-ballRadius, ballRadius*2, ballRadius*2);
+
 }
 function drawPaddle() {
     ctx.beginPath();
@@ -271,9 +279,14 @@ function drawBricks() {
                     b.y = brickY;
                     ctx.beginPath();
                     ctx.rect(brickX, brickY, brickWidth, brickHeight);
-                    ctx.fillStyle = bricks[r][c].Type.color;
+                    ctx.fillStyle = b.Type.color;
                     ctx.fill();
                     ctx.closePath();
+
+
+                    var img = new Image();
+                    img.src = b.Type.path;
+                    ctx.drawImage(img, b.x,b.y,brickWidth, brickHeight);
                 }
             }
 
@@ -421,10 +434,10 @@ function getRandomType() {
 //    Remove mouse mechanism if possible. It's too funny
 function getSpritePath(type,isCracked){
     if (isCracked){
-        return "assets/type" + type +  "cracked.png";
+        return "./assets/type" + type +  "cracked.png";
     }
     else{
-        return "assets/type" + type +  ".png";
+        return "./assets/type" + type +  ".png";
     }
 
 }
