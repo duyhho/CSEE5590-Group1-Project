@@ -634,7 +634,7 @@ function drawScoreBoard(){
     if (checkWinStatus() || lives == 0){
         var canvas = document.getElementById("myCanvas");
         var ctx = canvas.getContext("2d");
-        ctx.fillStyle = "grey";
+        ctx.fillStyle = "blue";
         ctx.fillRect(boardX,boardY,boardWidth,boardHeight);
         ctx.fillStyle = "#0095DD";
 
@@ -694,6 +694,19 @@ function drawScoreBoard(){
         //disable keyboard movement
         checkPaddleMovement = function(){};
 
+        //play sound according to the situation
+        if (backgroundMusic != null){
+            backgroundMusic.stop();
+            if (lives == 0){
+                backgroundMusic = new sound('./assets/lose.mp3')
+            }
+            else if (checkWinStatus() == true){
+                backgroundMusic = new sound('./assets/win.mp3')
+            }
+            backgroundMusic.play();
+            backgroundMusic = null;
+        }
+
     }
 
 
@@ -711,12 +724,12 @@ function drawClickToStart(){
 
 }
 function drawPlayBtn(){
-    ctx.font = "16px Arial";
-    var playWidth = 100;
+    ctx.font = "20px Arial";
+    var playWidth = 300;
     var playHeight = 80;
     var playX = (canvas.width-playWidth)/2;
-    var playText = "PLAY NOW!"
-    var playButton = new Button(playX, canvas.height-playHeight, playWidth, playHeight, playText, {
+    var playText = "LET\'S BREAK SOME BRICKS!!"
+    var playButton = new Button(playX, (canvas.height-playHeight)/2, playWidth, playHeight, playText, {
         'default': {
             top: '#1879BD'
         },
@@ -776,6 +789,7 @@ function resetSpeed(e){
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); //this can be used as a laser upgrade!
     //drawPlayBtn();
+    collisionDetector();
     drawBackground();
     drawBricks();
     drawBall();
@@ -784,7 +798,7 @@ function draw() {
     drawLives();
     drawClickToStart();
     //drawScoreBoard();
-    collisionDetector();
+
     checkPaddleMovement();
     drawScoreBoard();
     requestAnimationFrame(draw); //Built-in method that paints objects for every frame
@@ -836,7 +850,7 @@ function getRandomType() {
 
     //
     var index = getRandomInt2(0, types.length-1);
-    var index = 0;
+    //var index = 1;
     return types[index];
 }
 function getRandomPowerUp(){
@@ -970,11 +984,31 @@ function sound(src) {
     this.sound.style.display = "none";
     document.body.appendChild(this.sound);
     this.play = function(){
-        this.sound.play();
+        //this.sound.play();
+        var promise = this.sound.play();
+
+        if (promise !== undefined) {
+            promise.then(_ => {
+                // Autoplay started!
+            }).catch(error => {
+                // Autoplay was prevented.
+                // Show a "Play" button so that user can start playback.
+            });
+        }
     };
     this.playLoop = function(){
         this.sound.loop=true;
-        this.sound.play();
+        var promise = this.sound.play();
+
+        if (promise !== undefined) {
+            promise.then(_ => {
+                // Autoplay started!
+            }).catch(error => {
+                console.log(error);
+                // Autoplay was prevented.
+                // Show a "Play" button so that user can start playback.
+            });
+        }
     };
     this.stop = function(){
         this.sound.pause();
