@@ -1,14 +1,14 @@
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 var ballRadius = 10;
-var x = canvas.width/2;
-var y = canvas.height-30;
 var dx = 0;
 var dy = 0;
 var paddleHeight = 20;
 var paddleWidth = 95;
 var paddleX = (canvas.width-paddleWidth)/2;
 var paddleY = canvas.height-paddleHeight;
+var x = canvas.width/2;
+var y = paddleY-ballRadius;
 var rightPressed = false;
 var leftPressed = false;
 var brickRowCount = 3;
@@ -29,6 +29,14 @@ var backgroundMusic;
 var ballStatus = 'normal';
 var ballSizeStatus = 'normal';
 var ballPower = 1;
+
+
+//Score board
+var boardWidth = 400;
+var boardHeight = 300;
+var boardX = canvas.width/2 - boardWidth/2;
+var boardY = canvas.height/2 - boardHeight/2;
+
 function setMargin(column) {
     var offset;
     if (column == 1){
@@ -47,7 +55,7 @@ for(var r=0; r<brickRowCount; r++) {
     bricks[r] = [];
 
     var newColumn = getRandomInt(1,5);
-    var newColumn = 1;
+    //var newColumn = 1;
     setMargin(newColumn);
     console.log("New Column: " + newColumn);
     // console.log(setMargin(newColumn));
@@ -156,8 +164,8 @@ function collisionDetector(){
         collisionNormal();
     }
     else if (ballStatus == "fire"){
-        //collisionFire();
-        collisionNormal();
+        collisionFire();
+        //collisionNormal();
     }
     else {
         collisionNormal();
@@ -181,8 +189,9 @@ function collisionDetector(){
         case "bottom-wall":
             lives--;
             if(lives <= 0) {
-                alert("GAME OVER");
-                document.location.reload();
+                //alert("GAME OVER");
+                lives = 0;
+                //document.location.reload();
             }
             else {
                 //alert("Live Lost!");
@@ -221,6 +230,45 @@ function collisionFire(){
                                 checkWinStatus();
 
                         }
+                    }
+                    else {
+                        console.log("About to call check powerup");
+                        console.log(b.powerup);
+                        var powerupCollisionStatus = checkPowerUpCollision(b);
+                        if (powerupCollisionStatus === "paddle"){
+                            b.powerup.status = 0;
+                            //alert("collided with powerup");
+                            if (b.powerup.type == 'fire'){
+                                activatePowerUp(b.powerup.type);
+                                var timer = b.powerup.timer;
+                                if (timer) {
+                                    clearTimeout(timer); //cancel the previous timer.
+                                    timer = null;
+                                }
+                                b.powerup.timer = setTimeout(function() {
+                                    deactivatePowerUp('fire');
+                                }, 5000);
+                            }
+                            if (b.powerup.type == 'large'){
+                                activatePowerUp(b.powerup.type);
+                                var timer = b.powerup.timer;
+                                if (timer) {
+                                    clearTimeout(timer); //cancel the previous timer.
+                                    timer = null;
+                                }
+                                b.powerup.timer = setTimeout(function() {
+                                    deactivatePowerUp('large');
+                                }, 5000);
+                            }
+                            console.log(b.powerup);
+                        }
+                        else if (powerupCollisionStatus === "wall") {
+                            b.powerup.status = 0;
+                        }
+                        // else {
+                        //     b.powerup.status = 1;
+                        // }
+
                     }
                 }
 
@@ -280,12 +328,26 @@ function collisionNormal() {
                         b.powerup.status = 0;
                         //alert("collided with powerup");
                         if (b.powerup.type == 'fire'){
-                            ballStatus = "fire";
-                            playSound("fire");
+                            activatePowerUp(b.powerup.type);
+                            var timer = b.powerup.timer;
+                            if (timer) {
+                                clearTimeout(timer); //cancel the previous timer.
+                                timer = null;
+                            }
+                            b.powerup.timer = setTimeout(function() {
+                                deactivatePowerUp('fire');
+                            }, 5000);
                         }
                         if (b.powerup.type == 'large'){
-                            ballSizeStatus = 'large';
-                            playSound("large");
+                            activatePowerUp(b.powerup.type);
+                            var timer = b.powerup.timer;
+                            if (timer) {
+                                clearTimeout(timer); //cancel the previous timer.
+                                timer = null;
+                            }
+                            b.powerup.timer = setTimeout(function() {
+                                deactivatePowerUp('large');
+                            }, 5000);
                         }
                         console.log(b.powerup);
                     }
@@ -300,6 +362,26 @@ function collisionNormal() {
             }
 
         }
+    }
+}
+function activatePowerUp(powerup){
+    if (powerup == 'fire'){
+        ballStatus = "fire";
+        playSound("fire");
+    }
+    if (powerup== 'large'){
+        ballSizeStatus = 'large';
+        playSound("large");
+    }
+}
+function deactivatePowerUp(powerup){
+
+    //alert('in deactivate');
+    if (powerup == 'fire'){
+        ballStatus = "normal";
+    }
+    if (powerup== 'large'){
+        ballSizeStatus = 'normal';
     }
 }
 function playSound(name){
@@ -331,8 +413,11 @@ function checkBallStatus() {
 }
 function checkWinStatus() {
     if(score == totalBricks) {
-        alert("YOU WIN, CONGRATS!");
-        document.location.reload();
+
+        return true;
+    }
+    else {
+        return false;
     }
 }
 function checkBrickCollision(brick){
@@ -442,6 +527,9 @@ function drawBall() {
         ballRadius = 15;
         //img.src = "assets/ball.png";
     }
+    else if (ballSizeStatus == 'normal') {
+        ballRadius = 10;
+    }
     ctx.drawImage(img, x-ballRadius, y-ballRadius, ballRadius*2, ballRadius*2);
 
 }
@@ -531,14 +619,84 @@ function drawPowerUp(brick){
 
 }
 function drawScore() {
-    ctx.font = "16px Arial";
+    var fontSize = 27;
+    ctx.font = fontSize + "px Arial";
     ctx.fillStyle = "#0095DD";
-    ctx.fillText("Score: " + score, 8, 20);
+    ctx.fillText("Score: " + score, 8, fontSize);
 }
 function drawLives() {
-    ctx.font = "16px Arial";
+    var fontSize = 27;
+    ctx.font = fontSize + "px Arial";
     ctx.fillStyle = "#0095DD";
-    ctx.fillText("Lives: "+lives, canvas.width-65, 20);
+    ctx.fillText("Lives: "+lives, canvas.width-fontSize*4, fontSize);
+}
+function drawScoreBoard(){
+    if (checkWinStatus() || lives == 0){
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle = "grey";
+        ctx.fillRect(boardX,boardY,boardWidth,boardHeight);
+        ctx.fillStyle = "#0095DD";
+
+
+        //Board Title
+        var fontSize = 35;
+        ctx.font = fontSize + "px Arial";
+        ctx.fillStyle = "red";
+        var titleX = boardX + boardWidth/2 - fontSize*3;
+        var titleY = boardY + boardHeight/7;
+        ctx.fillText("GAME OVER!!!", titleX, titleY);
+        ctx.font = "16px Arial";
+
+
+        //Draw Score within Board
+        var fontSize = 25;
+        ctx.font = fontSize + "px Arial";
+        ctx.fillStyle = "white";
+        var scoreX = boardX + boardWidth/2 - fontSize*3;
+        var scoreY = boardY + boardHeight/3;
+        ctx.fillText("Your Score: " + score, scoreX, scoreY);
+        ctx.font = "16px Arial";
+
+        //Play again button
+        var playWidth = 150;
+        var playHeight = 70;
+        var playX = (boardX + (boardWidth-playWidth)*0.5);
+        var playY = (boardY + boardHeight)*0.8;
+        var playText = "TRY AGAIN";
+        var playButton = new Button(playX, playY, playWidth, playHeight, playText, {
+            'default': {
+                top: '#1879BD'
+            },
+            'hover': {
+                top: '#2C43EA'
+            },
+            'active': {
+                top: '#7C14DD'
+            }
+        }, function() {
+
+            animate = function(){}; //no need to render the play button anymore
+            //console.log(animate);
+            console.log("clicked Play");
+            canvas.addEventListener('mouseup', document.location.reload());
+
+
+        });
+
+        playButton.update();
+        playButton.draw();
+
+        //Paralyze Mouse Movements and Clicks
+        document.removeEventListener("mousemove", mouseMoveHandler);
+        document.removeEventListener("mousedown", startGame);
+
+        //disable keyboard movement
+        checkPaddleMovement = function(){};
+
+    }
+
+
 }
 function drawClickToStart(){
     //Ball not moving
@@ -577,13 +735,15 @@ function drawPlayBtn(){
     });
     function animate() {
         requestAnimationFrame(animate);
-
+        //drawScoreBoard();
         playButton.update();
         playButton.draw();
     }
     requestAnimationFrame(animate);
 }
 function startGame(e){
+    score = 0;
+    lives = 3;
     mousePressed = false;
     //Initialize all the necessary sounds
     backgroundMusic = new sound("./assets/sample.mp3");
@@ -595,7 +755,6 @@ function startGame(e){
     reset();
 }
 function reset(){
-
     resetPosition();
     //drawClickToStart();
     canvas.addEventListener('mousedown', resetSpeed);
@@ -624,8 +783,10 @@ function draw() {
     drawScore();
     drawLives();
     drawClickToStart();
+    //drawScoreBoard();
     collisionDetector();
     checkPaddleMovement();
+    drawScoreBoard();
     requestAnimationFrame(draw); //Built-in method that paints objects for every frame
 }
 
@@ -675,7 +836,7 @@ function getRandomType() {
 
     //
     var index = getRandomInt2(0, types.length-1);
-    var index = 4;
+    var index = 0;
     return types[index];
 }
 function getRandomPowerUp(){
@@ -825,4 +986,5 @@ function sound(src) {
 
 //////////////////////////////////////////////////////////////////////////////////
 drawPlayBtn();
+//drawScoreBoard();
 //draw();
