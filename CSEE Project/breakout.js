@@ -1,14 +1,14 @@
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 var ballRadius = 10;
-var x = canvas.width/2;
-var y = canvas.height-30;
 var dx = 0;
 var dy = 0;
 var paddleHeight = 20;
 var paddleWidth = 95;
 var paddleX = (canvas.width-paddleWidth)/2;
 var paddleY = canvas.height-paddleHeight;
+var x = canvas.width/2;
+var y = paddleY-ballRadius;
 var rightPressed = false;
 var leftPressed = false;
 var brickRowCount = 3;
@@ -23,13 +23,22 @@ var lives = 3;
 var gamePaused = true;
 var totalBricks = 0;
 var bricks = [];
-var brickSound;
-var metalSound;
 var backgroundMusic;
 
 //Ball transformation
 var ballStatus = 'normal';
 var ballSizeStatus = 'normal';
+var ballPower = 1;
+
+//Paddle Transformation
+var paddleSizeStatus = 'normal';
+
+//Score board
+var boardWidth = 400;
+var boardHeight = 300;
+var boardX = canvas.width/2 - boardWidth/2;
+var boardY = canvas.height/2 - boardHeight/2;
+
 function setMargin(column) {
     var offset;
     if (column == 1){
@@ -48,6 +57,7 @@ for(var r=0; r<brickRowCount; r++) {
     bricks[r] = [];
 
     var newColumn = getRandomInt(1,5);
+    //var newColumn = 1;
     setMargin(newColumn);
     console.log("New Column: " + newColumn);
     // console.log(setMargin(newColumn));
@@ -57,7 +67,7 @@ for(var r=0; r<brickRowCount; r++) {
         if (randomType.type != 4){
             console.log("Countable Brick Type: " + randomType.type);
 
-            totalBricks += randomType.type;
+            totalBricks += randomType.toughness;
             //console.log("Current Required Score: " + totalBricks);
         }
         if (c === 0){
@@ -65,6 +75,11 @@ for(var r=0; r<brickRowCount; r++) {
         }
         else {
             bricks[r][c] = { x: 0, y: 0, status: 1, Type: randomType, glowVal: 0 };
+        }
+        if (randomType.type == 5){
+            var PowerUpType = getRandomPowerUp();
+            bricks[r][c].powerup = PowerUpType;
+            bricks[r][c].powerup.speed = 1;
         }
 
     }
@@ -141,11 +156,18 @@ function mouseMoveHandler(e) {
 }
 function collisionDetector(){
     //Collision with bricks
+    if (ballSizeStatus == 'large'){
+        ballPower = 2;
+    }
+    else {
+        ballPower = 1;
+    }
     if (ballStatus == "normal"){
         collisionNormal();
     }
     else if (ballStatus == "fire"){
         collisionFire();
+        //collisionNormal();
     }
     else {
         collisionNormal();
@@ -168,9 +190,11 @@ function collisionDetector(){
             break;
         case "bottom-wall":
             lives--;
+            playSound("livelost");
             if(lives <= 0) {
-                alert("GAME OVER");
-                document.location.reload();
+                //alert("GAME OVER");
+                lives = 0;
+                //document.location.reload();
             }
             else {
                 //alert("Live Lost!");
@@ -190,7 +214,7 @@ function collisionFire(){
                         if(collisionPoint != false) {
                             if (b.Type.type == 4){
                                 //if collides with an unbreakable brick
-                                metalSound.play();
+                                playSound("metal");
                                 if (collisionPoint == "left" || collisionPoint == "right"){
                                     dx = -dx;
                                 }
@@ -202,14 +226,63 @@ function collisionFire(){
                             else {
                                 b.status = 0;
                                 score += b.Type.toughness;
-                                brickSound = new sound("./assets/explode.wav");
-                                brickSound.play();
+                                playSound("brickBurnt");
                             }
                             //console.log("Collided Brick Type: " + b.type)
                                 checkBallStatus();
                                 checkWinStatus();
 
                         }
+                    }
+                    else {
+                        console.log("About to call check powerup");
+                        console.log(b.powerup);
+                        var powerupCollisionStatus = checkPowerUpCollision(b);
+                        if (powerupCollisionStatus === "paddle"){
+                            b.powerup.status = 0;
+                            //alert("collided with powerup");
+                            if (b.powerup.type == 'fire'){
+                                activatePowerUp(b.powerup.type);
+                                var timer = b.powerup.timer;
+                                if (timer) {
+                                    clearTimeout(timer); //cancel the previous timer.
+                                    timer = null;
+                                }
+                                b.powerup.timer = setTimeout(function() {
+                                    deactivatePowerUp('fire');
+                                }, 5000);
+                            }
+                            if (b.powerup.type == 'large'){
+                                activatePowerUp(b.powerup.type);
+                                var timer = b.powerup.timer;
+                                if (timer) {
+                                    clearTimeout(timer); //cancel the previous timer.
+                                    timer = null;
+                                }
+                                b.powerup.timer = setTimeout(function() {
+                                    deactivatePowerUp('large');
+                                }, 5000);
+                            }
+                            if (b.powerup.type == 'long'){
+                                activatePowerUp(b.powerup.type);
+                                var timer = b.powerup.timer;
+                                if (timer) {
+                                    clearTimeout(timer); //cancel the previous timer.
+                                    timer = null;
+                                }
+                                b.powerup.timer = setTimeout(function() {
+                                    deactivatePowerUp('long');
+                                }, 5000);
+                            }
+                            console.log(b.powerup);
+                        }
+                        else if (powerupCollisionStatus === "wall") {
+                            b.powerup.status = 0;
+                        }
+                        // else {
+                        //     b.powerup.status = 1;
+                        // }
+
                     }
                 }
 
@@ -222,7 +295,7 @@ function collisionNormal() {
         for(var c=0; c < maxbrickColumnCount; c++) {
             var b = bricks[r][c];
             if (b!= null){
-                if(b.status == 1) {
+                if(b.status === 1) {
                     var collisionPoint = checkBrickCollision(b);
                     if(collisionPoint != false) {
                         if (collisionPoint == "left" || collisionPoint == "right"){
@@ -234,68 +307,159 @@ function collisionNormal() {
 
                         //console.log("Collided Brick Type: " + b.type)
                         if (b.Type.type != 4){ //check whether this is a nonbreakable brick
-                            brickSound.play();
+                            playSound("brickNormal");
                             b.glowVal = 30;
-                            b.Type.toughness--;
+                            if (b.Type.toughness < ballPower){
+                                score+= b.Type.toughness;
+                                b.Type.toughness = 0;
+                            }
+                            else {
+                                b.Type.toughness -= ballPower;
+                                score += ballPower;
+                            }
                             b.Type.path = getSpritePath(b.Type.type, true);
                             if (b.Type.toughness <=0 ){
                                 b.status = 0;
                             }
-                            score++;
+
                             checkBallStatus();
                             checkWinStatus();
 
                         }
                         //if collides with an unbreakable brick
                         else{
-                            metalSound.play();
+                            playSound("metal");
                         }
 
                     }
+
+                }
+                else {
+                    console.log("About to call check powerup");
+                    console.log(b.powerup);
+                    var powerupCollisionStatus = checkPowerUpCollision(b);
+                    if (powerupCollisionStatus === "paddle"){
+                        b.powerup.status = 0;
+                        //alert("collided with powerup");
+                        if (b.powerup.type == 'fire'){
+                            activatePowerUp(b.powerup.type);
+                            var timer = b.powerup.timer;
+                            if (timer) {
+                                clearTimeout(timer); //cancel the previous timer.
+                                timer = null;
+                            }
+                            b.powerup.timer = setTimeout(function() {
+                                deactivatePowerUp('fire');
+                            }, 5000);
+                        }
+                        if (b.powerup.type == 'large'){
+                            activatePowerUp(b.powerup.type);
+                            var timer = b.powerup.timer;
+                            if (timer) {
+                                clearTimeout(timer); //cancel the previous timer.
+                                timer = null;
+                            }
+                            b.powerup.timer = setTimeout(function() {
+                                deactivatePowerUp('large');
+                            }, 5000);
+                        }
+                        if (b.powerup.type == 'long'){
+                            activatePowerUp(b.powerup.type);
+                            var timer = b.powerup.timer;
+                            if (timer) {
+                                clearTimeout(timer); //cancel the previous timer.
+                                timer = null;
+                            }
+                            b.powerup.timer = setTimeout(function() {
+                                deactivatePowerUp('long');
+                            }, 5000);
+                        }
+                        console.log(b.powerup);
+                    }
+                    else if (powerupCollisionStatus === "wall") {
+                        b.powerup.status = 0;
+                    }
+                    // else {
+                    //     b.powerup.status = 1;
+                    // }
+
                 }
             }
 
         }
     }
-// //    Collision with walls and paddles
-//
-//     //Collision with paddle
-//     if (checkPaddleCollision()){
-//         dy = -dy;
-//     }
-//     //Check for collision with walls
-//     switch (checkWallCollision()){
-//         case "side-wall":
-//             dx = -dx;
-//             break;
-//         case "top-wall":
-//             dy = -dy;
-//             break;
-//         case "bottom-wall":
-//             lives--;
-//             if(lives <= 0) {
-//                 alert("GAME OVER");
-//                 document.location.reload();
-//             }
-//             else {
-//                 //alert("Live Lost!");
-//                 reset();
-//             }
-//             break;
-//     }
+}
+function activatePowerUp(powerup){
+    if (powerup == 'fire'){
+        ballStatus = "fire";
+        playSound("fire");
+    }
+    if (powerup== 'large'){
+        ballSizeStatus = 'large';
+        playSound("large");
+    }
+    if (powerup== 'long'){
+        paddleSizeStatus = 'long';
+        playSound("long");
+    }
+}
+function deactivatePowerUp(powerup){
+
+    //alert('in deactivate');
+    if (powerup == 'fire'){
+        ballStatus = "normal";
+    }
+    else if (powerup== 'large'){
+        ballSizeStatus = 'normal';
+    }
+    else if (powerup== 'long'){
+        paddleSizeStatus = 'normal';
+    }
+    playSound('downgrade');
+}
+function playSound(name){
+    var Sound = null;
+    if (name == "metal"){
+        Sound = new sound("./assets/metal.wav");
+    }
+    else if (name == "brickBurnt"){
+        Sound = new sound("./assets/explode.wav");
+    }
+    else if (name == "brickNormal"){
+        Sound = new sound("./assets/brick.wav");
+    }
+    else if (name == "fire"){
+        Sound = new sound("./assets/fire.mp3");
+    }
+    else if (name == "large"){
+        Sound = new sound("./assets/large.wav");
+    }
+    else if (name == "long"){
+        Sound = new sound("./assets/long.wav");
+    }
+    else if (name == 'livelost'){
+        Sound = new sound("./assets/livelost.wav");
+    }
+    else if (name == 'downgrade'){
+        Sound = new sound("./assets/downgrade.wav");
+    }
+    Sound.play();
 }
 function checkBallStatus() {
-    if (score >= 2){
-        ballSizeStatus = "large";
-    }
-    if (score >= 4){
-        ballStatus = "fire";
-    }
+    // if (score >= 2){
+    //     ballSizeStatus = "large";
+    // }
+    // if (score >= 4){
+    //     ballStatus = "fire";
+    // }
 }
 function checkWinStatus() {
     if(score == totalBricks) {
-        alert("YOU WIN, CONGRATS!");
-        document.location.reload();
+
+        return true;
+    }
+    else {
+        return false;
     }
 }
 function checkBrickCollision(brick){
@@ -320,6 +484,40 @@ function checkBrickCollision(brick){
         }
     }
     return false;
+}
+function checkPowerUpCollision(brick) {
+
+    //console.log("in check powerupcollision");
+    if (brick.status == 0){
+        if (brick.Type.type == 5){
+            if (brick.powerup.status == 1){
+                //console.log("Destroyed Type: " + brick.Type.type);
+                //console.log(brick.powerup)
+                powerupY = brick.powerup.y;
+                powerupX = brick.powerup.x;
+                powerupSize = brick.powerup.size;
+                // console.log("Current PowerUp X: " + powerupX);
+                // console.log("Current Paddle X: " + paddleX + " " + (paddleX+paddleWidth));
+                // console.log("Current PowerUp Y: " + powerupY);
+                // console.log("Current Paddle Y: " + paddleY);
+                console.log(powerupSize);
+
+
+                if (powerupX >= paddleX && (powerupX + powerupSize <= paddleX+paddleWidth)){
+                    //console.log("within x range!!!")
+
+                    if (powerupY + powerupSize >= paddleY){
+                        return "paddle";
+                    }
+                }
+                if (powerupY + powerupSize > canvas.height) {
+                    return "wall";
+                }
+            }
+        }
+
+    }
+
 }
 function checkPaddleCollision(){
     //Collision with paddle
@@ -371,6 +569,9 @@ function drawBall() {
         ballRadius = 15;
         //img.src = "assets/ball.png";
     }
+    else if (ballSizeStatus == 'normal') {
+        ballRadius = 10;
+    }
     ctx.drawImage(img, x-ballRadius, y-ballRadius, ballRadius*2, ballRadius*2);
 
 }
@@ -383,6 +584,12 @@ function drawPaddle() {
     setGlow(false);
     var img = new Image();
     img.src = "assets/paddle1.png";
+    if (paddleSizeStatus == 'normal'){
+        paddleWidth = 95;
+    }
+    else if (paddleSizeStatus == "long"){
+        paddleWidth = 125;
+    }
     ctx.drawImage(img, paddleX, paddleY, paddleWidth, paddleHeight);
 }
 
@@ -428,21 +635,129 @@ function drawBricks() {
                     img.src = b.Type.path;
                     ctx.drawImage(img, b.x,b.y,brickWidth, brickHeight);
 
+
+                }
+                //If brick is destroyed and it's a special effect brick
+                else {
+                    if (b.Type.type == 5){
+                        drawPowerUp(b);
+                        b.powerup.x = b.x + 0.5*brickWidth - b.powerup.size;
+                        b.powerup.y = b.y + b.powerup.speed;
+                        b.powerup.speed += 2;
+                    }
+
                 }
             }
 
         }
     }
 }
+function drawPowerUp(brick){
+    if (brick.powerup.status == 1){
+        var dy = brick.powerup.speed;
+        if (brick.y + dy <= canvas.height){
+            ctx.beginPath();
+            ctx.rect(brick.powerup.x, brick.y + dy, 20, 20);
+            ctx.fillStyle = brick.powerup.color;
+            ctx.fill();
+            ctx.closePath();
+        }
+    }
+
+
+}
 function drawScore() {
-    ctx.font = "16px Arial";
+    var fontSize = 27;
+    ctx.font = fontSize + "px Arial";
     ctx.fillStyle = "#0095DD";
-    ctx.fillText("Score: " + score, 8, 20);
+    ctx.fillText("Score: " + score, 8, fontSize);
 }
 function drawLives() {
-    ctx.font = "16px Arial";
+    var fontSize = 27;
+    ctx.font = fontSize + "px Arial";
     ctx.fillStyle = "#0095DD";
-    ctx.fillText("Lives: "+lives, canvas.width-65, 20);
+    ctx.fillText("Lives: "+lives, canvas.width-fontSize*4, fontSize);
+}
+function drawScoreBoard(){
+    if (checkWinStatus() || lives == 0){
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle = "blue";
+        ctx.fillRect(boardX,boardY,boardWidth,boardHeight);
+        ctx.fillStyle = "#0095DD";
+
+
+        //Board Title
+        var fontSize = 35;
+        ctx.font = fontSize + "px Arial";
+        ctx.fillStyle = "red";
+        var titleX = boardX + boardWidth/2 - fontSize*3;
+        var titleY = boardY + boardHeight/7;
+        ctx.fillText("GAME OVER!!!", titleX, titleY);
+        ctx.font = "16px Arial";
+
+
+        //Draw Score within Board
+        var fontSize = 25;
+        ctx.font = fontSize + "px Arial";
+        ctx.fillStyle = "white";
+        var scoreX = boardX + boardWidth/2 - fontSize*3;
+        var scoreY = boardY + boardHeight/3;
+        ctx.fillText("Your Score: " + score, scoreX, scoreY);
+        ctx.font = "16px Arial";
+
+        //Play again button
+        var playWidth = 150;
+        var playHeight = 70;
+        var playX = (boardX + (boardWidth-playWidth)*0.5);
+        var playY = (boardY + boardHeight)*0.8;
+        var playText = "TRY AGAIN";
+        var playButton = new Button(playX, playY, playWidth, playHeight, playText, {
+            'default': {
+                top: '#1879BD'
+            },
+            'hover': {
+                top: '#2C43EA'
+            },
+            'active': {
+                top: '#7C14DD'
+            }
+        }, function() {
+
+            animate = function(){}; //no need to render the play button anymore
+            //console.log(animate);
+            console.log("clicked Play");
+            canvas.addEventListener('mouseup', document.location.reload());
+
+
+        });
+
+        playButton.update();
+        playButton.draw();
+
+        //Paralyze Mouse Movements and Clicks
+        document.removeEventListener("mousemove", mouseMoveHandler);
+        document.removeEventListener("mousedown", startGame);
+
+        //disable keyboard movement
+        checkPaddleMovement = function(){};
+
+        //play sound according to the situation
+        if (backgroundMusic != null){
+            backgroundMusic.stop();
+            if (lives == 0){
+                backgroundMusic = new sound('./assets/lose.mp3')
+            }
+            else if (checkWinStatus() == true){
+                backgroundMusic = new sound('./assets/win.mp3')
+            }
+            backgroundMusic.play();
+            backgroundMusic = null;
+        }
+
+    }
+
+
 }
 function drawClickToStart(){
     //Ball not moving
@@ -457,12 +772,12 @@ function drawClickToStart(){
 
 }
 function drawPlayBtn(){
-    ctx.font = "16px Arial";
-    var playWidth = 100;
+    ctx.font = "20px Arial";
+    var playWidth = 300;
     var playHeight = 80;
     var playX = (canvas.width-playWidth)/2;
-    var playText = "PLAY NOW!"
-    var playButton = new Button(playX, canvas.height-playHeight, playWidth, playHeight, playText, {
+    var playText = "LET\'S BREAK SOME BRICKS!!"
+    var playButton = new Button(playX, (canvas.height-playHeight)/2, playWidth, playHeight, playText, {
         'default': {
             top: '#1879BD'
         },
@@ -481,19 +796,19 @@ function drawPlayBtn(){
     });
     function animate() {
         requestAnimationFrame(animate);
-
+        //drawScoreBoard();
         playButton.update();
         playButton.draw();
     }
     requestAnimationFrame(animate);
 }
 function startGame(e){
+    score = 0;
+    lives = 3;
     mousePressed = false;
     //Initialize all the necessary sounds
     backgroundMusic = new sound("./assets/sample.mp3");
     backgroundMusic.playLoop();
-    brickSound = new sound("./assets/brick.wav");
-    metalSound = new sound("./assets/metal.wav");
     //Start Drawing
     draw();
     canvas.removeEventListener('mousedown', startGame);
@@ -501,7 +816,6 @@ function startGame(e){
     reset();
 }
 function reset(){
-
     resetPosition();
     //drawClickToStart();
     canvas.addEventListener('mousedown', resetSpeed);
@@ -523,6 +837,7 @@ function resetSpeed(e){
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); //this can be used as a laser upgrade!
     //drawPlayBtn();
+    collisionDetector();
     drawBackground();
     drawBricks();
     drawBall();
@@ -530,8 +845,10 @@ function draw() {
     drawScore();
     drawLives();
     drawClickToStart();
-    collisionDetector();
+    //drawScoreBoard();
+
     checkPaddleMovement();
+    drawScoreBoard();
     requestAnimationFrame(draw); //Built-in method that paints objects for every frame
 }
 
@@ -575,6 +892,20 @@ function getRandomType() {
         {type: 2, color: "#f4f407", toughness: 2, path: getSpritePath(2, false)},
         {type: 3, color: "#ed2009", toughness: 3, path: getSpritePath(3, false)},
         {type: 4, color: "#8c9188", toughness: 100000, path: getSpritePath(4, false)},
+        {type: 5, color: "#2ae0ea", toughness: 3, path: getSpritePath(5, false)},
+    ];
+    //TODO: Set limit for each type
+
+    //
+    var index = getRandomInt2(0, types.length-1);
+    //var index = 1;
+    return types[index];
+}
+function getRandomPowerUp(){
+    var types = [
+        {type: "fire", size: 20, color: "#ed2009" , path: "", status: 1},
+        {type: "large", size: 20, color: "#2ae0ea", path: "", status: 1},
+        {type: "long", size: 20, color: "#52d868", path: "", status: 1},
     ];
     var index = getRandomInt2(0, types.length-1);
     return types[index];
@@ -702,11 +1033,31 @@ function sound(src) {
     this.sound.style.display = "none";
     document.body.appendChild(this.sound);
     this.play = function(){
-        this.sound.play();
+        //this.sound.play();
+        var promise = this.sound.play();
+
+        if (promise !== undefined) {
+            promise.then(_ => {
+                // Autoplay started!
+            }).catch(error => {
+                // Autoplay was prevented.
+                // Show a "Play" button so that user can start playback.
+            });
+        }
     };
     this.playLoop = function(){
         this.sound.loop=true;
-        this.sound.play();
+        var promise = this.sound.play();
+
+        if (promise !== undefined) {
+            promise.then(_ => {
+                // Autoplay started!
+            }).catch(error => {
+                console.log(error);
+                // Autoplay was prevented.
+                // Show a "Play" button so that user can start playback.
+            });
+        }
     };
     this.stop = function(){
         this.sound.pause();
@@ -718,4 +1069,9 @@ function sound(src) {
 
 //////////////////////////////////////////////////////////////////////////////////
 drawPlayBtn();
+//drawScoreBoard();
 //draw();
+
+
+
+///////////////////////////////Progress Bar///////////////////////////////////////
