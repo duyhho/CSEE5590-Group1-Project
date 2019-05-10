@@ -23,7 +23,9 @@ var lives = 3;
 var gamePaused = true;
 var totalBricks = 0;
 var bricks = [];
-
+var brickSound;
+var metalSound;
+var backgroundMusic;
 
 function setMargin(column) {
     var offset;
@@ -142,7 +144,9 @@ function collisionDetection() {
             if (b!= null){
                 if(b.status == 1) {
                     var collisionPoint = checkBrickCollision(b);
+                    //console.log(collisionPoint);
                     if(collisionPoint != false) {
+
                         if (collisionPoint == "left" || collisionPoint == "right"){
                             dx = -dx;
                         }
@@ -152,9 +156,8 @@ function collisionDetection() {
 
                         //console.log("Collided Brick Type: " + b.type)
                         if (b.Type.type != 4){ //check whether this is a nonbreakable brick
-
+                            brickSound.play();
                             b.Type.toughness--;
-                            b.Type.path = getSpritePath(b.Type.type, true);
                             if (b.Type.toughness <=0 ){
                                 b.status = 0;
                             }
@@ -163,6 +166,9 @@ function collisionDetection() {
                                 alert("YOU WIN, CONGRATS!");
                                 document.location.reload();
                             }
+                        }
+                        else{
+                            metalSound.play();
                         }
 
                     }
@@ -245,20 +251,12 @@ function checkWallCollision(){
         return "bottom-wall";
     }
 }
-function drawWall(){
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = "black";
-}
 function drawBall() {
     ctx.beginPath();
     ctx.arc(x, y, ballRadius, 0, Math.PI*2);
     ctx.fillStyle = "#0095DD";
     ctx.fill();
     ctx.closePath();
-    var img = new Image();
-    img.src = "assets/redball.png";
-    ctx.drawImage(img, x-ballRadius, y-ballRadius, ballRadius*2, ballRadius*2);
-
 }
 function drawPaddle() {
     ctx.beginPath();
@@ -279,14 +277,9 @@ function drawBricks() {
                     b.y = brickY;
                     ctx.beginPath();
                     ctx.rect(brickX, brickY, brickWidth, brickHeight);
-                    ctx.fillStyle = b.Type.color;
+                    ctx.fillStyle = bricks[r][c].Type.color;
                     ctx.fill();
                     ctx.closePath();
-
-
-                    var img = new Image();
-                    img.src = b.Type.path;
-                    ctx.drawImage(img, b.x,b.y,brickWidth, brickHeight);
                 }
             }
 
@@ -348,6 +341,10 @@ function drawPlayBtn(){
 }
 function startGame(e){
     mousePressed = false;
+    backgroundMusic = new sound("./assets/sample.mp3");
+    backgroundMusic.play();
+    brickSound = new sound("./assets/brick.wav");
+    metalSound = new sound("./assets/metal.wav");
     draw();
     canvas.removeEventListener('mousedown', startGame);
     reset();
@@ -434,10 +431,10 @@ function getRandomType() {
 //    Remove mouse mechanism if possible. It's too funny
 function getSpritePath(type,isCracked){
     if (isCracked){
-        return "./assets/type" + type +  "cracked.png";
+        return "assets/type" + type +  "cracked.png";
     }
     else{
-        return "./assets/type" + type +  ".png";
+        return "assets/type" + type +  ".png";
     }
 
 }
@@ -532,7 +529,21 @@ function Button(x, y, w, h, text, colors, clickCB) {
         ctx.restore();
     };
 }
-
+function sound(src) {
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+        console.log("inplay");
+        this.sound.play();
+    };
+    this.stop = function(){
+        this.sound.pause();
+    };
+}
 
 //To do list: Set random color and toughness
 
