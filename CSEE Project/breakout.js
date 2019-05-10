@@ -1,94 +1,91 @@
-var canvas = document.getElementById("myCanvas");
-var ctx = canvas.getContext("2d");
-var ballRadius = 10;
-var dx = 0;
-var dy = 0;
-var paddleHeight = 20;
-var paddleWidth = 95;
-var paddleX = (canvas.width-paddleWidth)/2;
-var paddleY = canvas.height-paddleHeight;
-var x = canvas.width/2;
-var y = paddleY-ballRadius;
-var rightPressed = false;
-var leftPressed = false;
-var brickRowCount = 3;
-var maxbrickColumnCount = 5;
-var brickWidth = canvas.width/6;
-var brickHeight = canvas.height/12;
-var brickPadding = 10;
-var brickOffsetTop = 50;
-var brickOffsetLeft = 30;
-var score = 0;
-var lives = 3;
-var gamePaused = true;
-var totalBricks = 0;
-var bricks = [];
-var backgroundMusic;
+const canvas = document.getElementById("myCanvas");
+const ctx = canvas.getContext('2d');
+let ballRadius = 10;
+let dx = 0;
+let dy = 0;
+const paddleHeight = 20;
+let paddleWidth = 95;
+let paddleX = (canvas.width - paddleWidth) / 2;
+const paddleY = canvas.height - paddleHeight;
+let x = canvas.width / 2;
+let y = paddleY - ballRadius;
+let rightPressed = false;
+let leftPressed = false;
+const brickRowCount = 3;
+const maxbrickColumnCount = 5;
+const brickWidth = canvas.width / 6;
+const brickHeight = canvas.height / 12;
+const brickPadding = 10;
+const brickOffsetTop = 50;
+const brickOffsetLeft = 30;
+let score = 0;
+let lives = 3;
+const gamePaused = true;
+let totalBricks = 0;
+const bricks = [];
+let backgroundMusic;
 
-//Ball transformation
-var ballStatus = 'normal';
-var ballSizeStatus = 'normal';
-var ballPower = 1;
+// Ball transformation
+let ballStatus = 'normal';
+let ballSizeStatus = 'normal';
+let ballPower = 1;
 
-//Paddle Transformation
-var paddleSizeStatus = 'normal';
+// Paddle Transformation
+let paddleSizeStatus = 'normal';
 
-//Score board
-var boardWidth = 400;
-var boardHeight = 300;
-var boardX = canvas.width/2 - boardWidth/2;
-var boardY = canvas.height/2 - boardHeight/2;
+// Score board
+const boardWidth = 400;
+const boardHeight = 300;
+const boardX = canvas.width / 2 - boardWidth / 2;
+const boardY = canvas.height / 2 - boardHeight / 2;
 
-//Progress Bar
-maxBarWidth = 250;
-bar = new progressbar();
+// Progress Bar
+const maxBarWidth = 250;
+const bar = new progressbar();
 
 function setMargin(column) {
-    var offset;
-    if (column == 1){
-        offset = 2 * (brickWidth+brickPadding);
-    }
-    else if (column == 3){
-        offset = (brickWidth+brickPadding);
-    }
-    else {
+    let offset;
+    if (column === 1) {
+        offset = 2 * (brickWidth + brickPadding);
+    } else if (column === 3) {
+        offset = (brickWidth + brickPadding);
+    } else {
         offset = 0;
     }
     return offset;
 }
 
-for(var r=0; r<brickRowCount; r++) {
+for (let r = 0; r < brickRowCount; r++) {
     bricks[r] = [];
 
-    var newColumn = getRandomInt(1,5);
-    //var newColumn = 1;
+    const newColumn = getRandomInt(1, 5);
+    // var newColumn = 1;
     setMargin(newColumn);
-    console.log("New Column: " + newColumn);
+    console.log('New Column: ' + newColumn);
     // console.log(setMargin(newColumn));
 
-    for(var c=0; c<newColumn; c++) {
-        var randomType = getRandomType();
-        if (randomType.type != 4){
-            console.log("Countable Brick Type: " + randomType.type);
+    for (let c = 0; c < newColumn; c++) {
+        const randomType = getRandomType();
+        if (randomType.type !== 4) {
+            console.log('Countable Brick Type: ' + randomType.type);
 
             totalBricks += randomType.toughness;
-            //console.log("Current Required Score: " + totalBricks);
+            // console.log("Current Required Score: " + totalBricks);
         }
-        if (c === 0){
-            bricks[r][0] = { x: 0, y: 0, status: 1, Type: randomType, offset: setMargin(newColumn), glowVal: 0};
+        if (c === 0) {
+            bricks[r][0] = {x: 0, y: 0, status: 1, Type: randomType, offset: setMargin(newColumn), glowVal: 0};
+        } else {
+            bricks[r][c] = {x: 0, y: 0, status: 1, Type: randomType, glowVal: 0};
         }
-        else {
-            bricks[r][c] = { x: 0, y: 0, status: 1, Type: randomType, glowVal: 0 };
-        }
-        if (randomType.type == 5){
-            var PowerUpType = getRandomPowerUp();
+        if (randomType.type === 5) {
+            const PowerUpType = getRandomPowerUp();
             bricks[r][c].powerup = PowerUpType;
             bricks[r][c].powerup.speed = 1;
         }
 
     }
 }
-console.log("Total Bricks: " + totalBricks);
+console.log('Total Bricks: ' + totalBricks);
 console.log(bricks);
 // for(var c=0; c<brickColumnCount; c++) {
 //     bricks[c] = [];
@@ -97,292 +94,182 @@ console.log(bricks);
 //     }
 // }
 
-document.addEventListener("keydown", keyDownHandler, false);
-document.addEventListener("keyup", keyUpHandler, false);
-document.addEventListener("mousemove", mouseMoveHandler, false);
+document.addEventListener('keydown', keyDownHandler, false);
+document.addEventListener('keyup', keyUpHandler, false);
+document.addEventListener('mousemove', mouseMoveHandler, false);
 // mouse event variables
-var mousePosition = {
+const mousePosition = {
     x: 0,
     y: 0
 };
-var mousePressed = false;
+let mousePressed = false;
 
 /**
  * Track the user's mouse position on mouse move.
- * @param {Event} event
  */
-canvas.addEventListener('mousemove', function(event) {
+canvas.addEventListener('mousemove', event => {
     mousePosition.x = event.offsetX || event.layerX;
     mousePosition.y = event.offsetY || event.layerY;
 });
 
 /**
  * Track the user's clicks.
- * @param {Event} event
  */
-canvas.addEventListener('mousedown', function(event) {
+canvas.addEventListener('mousedown', event => {
     mousePressed = true;
 });
-canvas.addEventListener('mouseup', function(event) {
+canvas.addEventListener('mouseup', event => {
     mousePressed = false;
 });
+
 function keyDownHandler(e) {
-    if(e.key == "ArrowRight") {
+    if (e.key === 'ArrowRight') {
         rightPressed = true;
-    }
-    else if(e.key == "ArrowLeft") {
+    } else if (e.key === 'ArrowLeft') {
         leftPressed = true;
     }
 }
+
 function keyUpHandler(e) {
-    if(e.key == "ArrowRight") {
+    if (e.key === 'ArrowRight') {
         rightPressed = false;
-    }
-    else if(e.key == "ArrowLeft") {
+    } else if (e.key === 'ArrowLeft') {
         leftPressed = false;
     }
 }
-function checkPaddleMovement(){
-    if(rightPressed && paddleX < canvas.width-paddleWidth) {
+
+let checkPaddleMovement = () => {
+    if (rightPressed && paddleX < canvas.width - paddleWidth) {
         paddleX += 7;
-    }
-    else if(leftPressed && paddleX > 0) {
+    } else if (leftPressed && paddleX > 0) {
         paddleX -= 7;
     }
     x += dx;
     y += dy;
-}
+};
+
 function mouseMoveHandler(e) {
-    var relativeX = e.clientX - canvas.offsetLeft;
-    if(relativeX > 0 && relativeX < canvas.width) {
-        paddleX = relativeX - paddleWidth/2;
+    const relativeX = e.clientX - canvas.offsetLeft;
+    if (relativeX > 0 && relativeX < canvas.width) {
+        paddleX = relativeX - paddleWidth / 2;
     }
 }
-function collisionDetector(){
-    //Collision with bricks
-    if (ballSizeStatus == 'large'){
+
+function collisionDetector() {
+    // Collision with bricks
+    if (ballSizeStatus === 'large') {
         ballPower = 2;
-    }
-    else {
+    } else {
         ballPower = 1;
     }
-    if (ballStatus == "normal"){
+    if (ballStatus === 'normal') {
         collisionNormal();
-    }
-    else if (ballStatus == "fire"){
+    } else if (ballStatus === 'fire') {
         collisionFire();
-        //collisionNormal();
-    }
-    else {
+        // collisionNormal();
+    } else {
         collisionNormal();
     }
 
 
     //    Collision with walls and paddles
 
-    //Collision with paddle
-    if (checkPaddleCollision()){
+    // Collision with paddle
+    if (checkPaddleCollision()) {
         dy = -dy;
     }
-    //Check for collision with walls
-    switch (checkWallCollision()){
-        case "side-wall":
+    // Check for collision with walls
+    switch (checkWallCollision()) {
+        case 'side-wall':
             dx = -dx;
             break;
-        case "top-wall":
+        case 'top-wall':
             dy = -dy;
             break;
-        case "bottom-wall":
+        case 'bottom-wall':
             lives--;
-            playSound("livelost");
-            if(lives <= 0) {
-                //alert("GAME OVER");
+            playSound('livelost');
+            if (lives <= 0) {
+                // alert("GAME OVER");
                 lives = 0;
-                //document.location.reload();
-            }
-            else {
-                //alert("Live Lost!");
+                // document.location.reload();
+            } else {
+                // alert("Live Lost!");
                 reset();
             }
             break;
     }
 }
-function collisionFire(){
-    //Collision with Bricks
-        for(var r=0; r<brickRowCount; r++) {
-            for(var c=0; c < maxbrickColumnCount; c++) {
-                var b = bricks[r][c];
-                if (b!= null){
-                    if(b.status == 1) {
-                        var collisionPoint = checkBrickCollision(b);
-                        if(collisionPoint != false) {
-                            if (b.Type.type == 4){
-                                //if collides with an unbreakable brick
-                                playSound("metal");
-                                if (collisionPoint == "left" || collisionPoint == "right"){
-                                    dx = -dx;
-                                }
-                                else if (collisionPoint == "top" || collisionPoint == "bottom"){
-                                    dy = -dy;
-                                }
-                            }
 
-                            else {
-                                b.status = 0;
-                                score += b.Type.toughness;
-                                playSound("brickBurnt");
+function collisionFire() {
+    // Collision with Bricks
+    for (let r = 0; r < brickRowCount; r++) {
+        for (let c = 0; c < maxbrickColumnCount; c++) {
+            const b = bricks[r][c];
+            if (b) {
+                if (b.status === 1) {
+                    const collisionPoint = checkBrickCollision(b);
+                    if (collisionPoint !== false) {
+                        if (b.Type.type === 4) {
+                            // if collides with an unbreakable brick
+                            playSound('metal');
+                            if (collisionPoint === 'left' || collisionPoint === 'right') {
+                                dx = -dx;
+                            } else if (collisionPoint === 'top' || collisionPoint === 'bottom') {
+                                dy = -dy;
                             }
-                            //console.log("Collided Brick Type: " + b.type)
-                                checkBallStatus();
-                                checkWinStatus();
-
+                        } else {
+                            b.status = 0;
+                            score += b.Type.toughness;
+                            playSound('brickBurnt');
                         }
-                    }
-                    else {
-                        //console.log("About to call check powerup");
-                        //console.log(b.powerup);
-                        var powerupCollisionStatus = checkPowerUpCollision(b);
-                        if (powerupCollisionStatus === "paddle"){
-                            b.powerup.status = 0;
-                            //alert("collided with powerup");
-                            if (b.powerup.type == 'fire'){
-                                activatePowerUp(b.powerup.type);
-                                var timer = b.powerup.timer;
-                                if (timer) {
-                                    clearTimeout(timer); //cancel the previous timer.
-                                    timer = null;
-                                }
-                                b.powerup.timer = setTimeout(function() {
-                                    deactivatePowerUp('fire');
-                                }, 5000);
-                            }
-                            if (b.powerup.type == 'large'){
-                                activatePowerUp(b.powerup.type);
-                                var timer = b.powerup.timer;
-                                if (timer) {
-                                    clearTimeout(timer); //cancel the previous timer.
-                                    timer = null;
-                                }
-                                b.powerup.timer = setTimeout(function() {
-                                    deactivatePowerUp('large');
-                                }, 5000);
-                            }
-                            if (b.powerup.type == 'long'){
-                                activatePowerUp(b.powerup.type);
-                                var timer = b.powerup.timer;
-                                if (timer) {
-                                    clearTimeout(timer); //cancel the previous timer.
-                                    timer = null;
-                                }
-                                b.powerup.timer = setTimeout(function() {
-                                    deactivatePowerUp('long');
-                                }, 5000);
-                            }
-                            //console.log(b.powerup);
-                        }
-                        else if (powerupCollisionStatus === "wall") {
-                            b.powerup.status = 0;
-                        }
-                        // else {
-                        //     b.powerup.status = 1;
-                        // }
+                        // console.log("Collided Brick Type: " + b.type)
+                        checkBallStatus();
+                        checkWinStatus();
 
                     }
-                }
-
-            }
-        }
-}
-function collisionNormal() {
-    //Collision with Bricks
-    for(var r=0; r<brickRowCount; r++) {
-        for(var c=0; c < maxbrickColumnCount; c++) {
-            var b = bricks[r][c];
-            if (b!= null){
-                if(b.status === 1) {
-                    var collisionPoint = checkBrickCollision(b);
-                    if(collisionPoint != false) {
-                        if (collisionPoint == "left" || collisionPoint == "right"){
-                            dx = -dx;
-                        }
-                        else if (collisionPoint == "top" || collisionPoint == "bottom"){
-                            dy = -dy;
-                        }
-
-                        //console.log("Collided Brick Type: " + b.type)
-                        if (b.Type.type != 4){ //check whether this is a nonbreakable brick
-                            playSound("brickNormal");
-                            b.glowVal = 30;
-                            if (b.Type.toughness < ballPower){
-                                score+= b.Type.toughness;
-                                b.Type.toughness = 0;
-                            }
-                            else {
-                                b.Type.toughness -= ballPower;
-                                score += ballPower;
-
-                            }
-                            bar.widths = (maxBarWidth/totalBricks)*score;
-                            b.Type.path = getSpritePath(b.Type.type, true);
-                            if (b.Type.toughness <=0 ){
-                                b.status = 0;
-                            }
-
-                            checkBallStatus();
-                            checkWinStatus();
-
-                        }
-                        //if collides with an unbreakable brick
-                        else{
-                            playSound("metal");
-                        }
-
-                    }
-
-                }
-                else {
-                    //console.log("About to call check powerup");
-                    //console.log(b.powerup);
-                    var powerupCollisionStatus = checkPowerUpCollision(b);
-                    if (powerupCollisionStatus === "paddle"){
+                } else {
+                    // console.log("About to call check powerup");
+                    // console.log(b.powerup);
+                    const powerupCollisionStatus = checkPowerUpCollision(b);
+                    if (powerupCollisionStatus === 'paddle') {
                         b.powerup.status = 0;
-                        //alert("collided with powerup");
-                        if (b.powerup.type == 'fire'){
+                        // alert("collided with powerup");
+                        if (b.powerup.type === 'fire') {
                             activatePowerUp(b.powerup.type);
-                            var timer = b.powerup.timer;
+                            let timer = b.powerup.timer;
                             if (timer) {
-                                clearTimeout(timer); //cancel the previous timer.
+                                clearTimeout(timer); // cancel the previous timer.
                                 timer = null;
                             }
-                            b.powerup.timer = setTimeout(function() {
+                            b.powerup.timer = setTimeout(() => {
                                 deactivatePowerUp('fire');
                             }, 5000);
                         }
-                        if (b.powerup.type == 'large'){
+                        if (b.powerup.type === 'large') {
                             activatePowerUp(b.powerup.type);
-                            var timer = b.powerup.timer;
+                            let timer = b.powerup.timer;
                             if (timer) {
-                                clearTimeout(timer); //cancel the previous timer.
+                                clearTimeout(timer); // cancel the previous timer.
                                 timer = null;
                             }
-                            b.powerup.timer = setTimeout(function() {
+                            b.powerup.timer = setTimeout(() => {
                                 deactivatePowerUp('large');
                             }, 5000);
                         }
-                        if (b.powerup.type == 'long'){
+                        if (b.powerup.type === 'long') {
                             activatePowerUp(b.powerup.type);
-                            var timer = b.powerup.timer;
+                            let timer = b.powerup.timer;
                             if (timer) {
-                                clearTimeout(timer); //cancel the previous timer.
+                                clearTimeout(timer); // cancel the previous timer.
                                 timer = null;
                             }
-                            b.powerup.timer = setTimeout(function() {
+                            b.powerup.timer = setTimeout(() => {
                                 deactivatePowerUp('long');
                             }, 5000);
                         }
-                        //console.log(b.powerup);
-                    }
-                    else if (powerupCollisionStatus === "wall") {
+                        // console.log(b.powerup);
+                    } else if (powerupCollisionStatus === 'wall') {
                         b.powerup.status = 0;
                     }
                     // else {
@@ -395,74 +282,163 @@ function collisionNormal() {
         }
     }
 }
-function activatePowerUp(powerup){
-    if (powerup == 'fire'){
-        ballStatus = "fire";
-        playSound("fire");
-        playSound("fire-voice");
-    }
-    if (powerup== 'large'){
-        ballSizeStatus = 'large';
-        playSound("large");
-        playSound("large-voice")
-    }
-    if (powerup== 'long'){
-        paddleSizeStatus = 'long';
-        playSound("long");
-        playSound("long-voice")
+
+function collisionNormal() {
+    // Collision with Bricks
+    for (let r = 0; r < brickRowCount; r++) {
+        for (let c = 0; c < maxbrickColumnCount; c++) {
+            const b = bricks[r][c];
+            if (b) {
+                if (b.status === 1) {
+                    const collisionPoint = checkBrickCollision(b);
+                    if (collisionPoint !== false) {
+                        if (collisionPoint === 'left' || collisionPoint === 'right') {
+                            dx = -dx;
+                        } else if (collisionPoint === 'top' || collisionPoint === 'bottom') {
+                            dy = -dy;
+                        }
+
+                        // console.log("Collided Brick Type: " + b.type)
+                        if (b.Type.type !== 4) { // check whether this is a nonbreakable brick
+                            playSound('brickNormal');
+                            b.glowVal = 30;
+                            if (b.Type.toughness < ballPower) {
+                                score += b.Type.toughness;
+                                b.Type.toughness = 0;
+                            } else {
+                                b.Type.toughness -= ballPower;
+                                score += ballPower;
+
+                            }
+                            bar.widths = (maxBarWidth / totalBricks) * score;
+                            b.Type.path = getSpritePath(b.Type.type, true);
+                            if (b.Type.toughness <= 0) {
+                                b.status = 0;
+                            }
+
+                            checkBallStatus();
+                            checkWinStatus();
+
+                        } else {
+                            playSound('metal');
+                        }
+
+                    }
+
+                } else {
+                    // console.log("About to call check powerup");
+                    // console.log(b.powerup);
+                    const powerupCollisionStatus = checkPowerUpCollision(b);
+                    if (powerupCollisionStatus === 'paddle') {
+                        b.powerup.status = 0;
+                        // alert("collided with powerup");
+                        if (b.powerup.type === 'fire') {
+                            activatePowerUp(b.powerup.type);
+                            let timer = b.powerup.timer;
+                            if (timer) {
+                                clearTimeout(timer); // cancel the previous timer.
+                                timer = null;
+                            }
+                            b.powerup.timer = setTimeout(() => {
+                                deactivatePowerUp('fire');
+                            }, 5000);
+                        }
+                        if (b.powerup.type === 'large') {
+                            activatePowerUp(b.powerup.type);
+                            let timer = b.powerup.timer;
+                            if (timer) {
+                                clearTimeout(timer); // cancel the previous timer.
+                                timer = null;
+                            }
+                            b.powerup.timer = setTimeout(() => {
+                                deactivatePowerUp('large');
+                            }, 5000);
+                        }
+                        if (b.powerup.type === 'long') {
+                            activatePowerUp(b.powerup.type);
+                            let timer = b.powerup.timer;
+                            if (timer) {
+                                clearTimeout(timer); // cancel the previous timer.
+                                timer = null;
+                            }
+                            b.powerup.timer = setTimeout(() => {
+                                deactivatePowerUp('long');
+                            }, 5000);
+                        }
+                        // console.log(b.powerup);
+                    } else if (powerupCollisionStatus === 'wall') {
+                        b.powerup.status = 0;
+                    }
+                    // else {
+                    //     b.powerup.status = 1;
+                    // }
+
+                }
+            }
+
+        }
     }
 }
-function deactivatePowerUp(powerup){
 
-    //alert('in deactivate');
-    if (powerup == 'fire'){
-        ballStatus = "normal";
+function activatePowerUp(powerup) {
+    if (powerup === 'fire') {
+        ballStatus = 'fire';
+        playSound('fire');
+        playSound('fire-voice');
     }
-    else if (powerup== 'large'){
+    if (powerup === 'large') {
+        ballSizeStatus = 'large';
+        playSound('large');
+        playSound('large-voice');
+    }
+    if (powerup === 'long') {
+        paddleSizeStatus = 'long';
+        playSound('long');
+        playSound('long-voice');
+    }
+}
+
+function deactivatePowerUp(powerup) {
+
+    // alert('in deactivate');
+    if (powerup === 'fire') {
+        ballStatus = 'normal';
+    } else if (powerup === 'large') {
         ballSizeStatus = 'normal';
-    }
-    else if (powerup== 'long'){
+    } else if (powerup === 'long') {
         paddleSizeStatus = 'normal';
     }
     playSound('downgrade');
 }
-function playSound(name){
-    var Sound = null;
-    if (name == "metal"){
-        Sound = new sound("./assets/metal.wav");
-    }
-    else if (name == "brickBurnt"){
-        Sound = new sound("./assets/explode.wav");
-    }
-    else if (name == "brickNormal"){
-        Sound = new sound("./assets/brick.wav");
-    }
-    else if (name == "fire"){
-        Sound = new sound("./assets/fire.mp3");
-    }
-    else if (name == "fire-voice"){
-        Sound = new sound("./assets/fireball-voice.wav");
-    }
-    else if (name == "large"){
-        Sound = new sound("./assets/large.wav");
-    }
-    else if (name == "large-voice"){
-        Sound = new sound("./assets/large-voice.wav");
-    }
-    else if (name == "long"){
-        Sound = new sound("./assets/long.wav");
-    }
-    else if (name == "long-voice"){
-        Sound = new sound("./assets/long-voice.wav");
-    }
-    else if (name == 'livelost'){
-        Sound = new sound("./assets/livelost.wav");
-    }
-    else if (name == 'downgrade'){
-        Sound = new sound("./assets/downgrade.wav");
+
+function playSound(name) {
+    let Sound = null;
+    if (name === 'metal') {
+        Sound = new sound('./assets/metal.wav');
+    } else if (name === 'brickBurnt') {
+        Sound = new sound('./assets/explode.wav');
+    } else if (name === 'brickNormal') {
+        Sound = new sound('./assets/brick.wav');
+    } else if (name === 'fire') {
+        Sound = new sound('./assets/fire.mp3');
+    } else if (name === 'fire-voice') {
+        Sound = new sound('./assets/fireball-voice.wav');
+    } else if (name === 'large') {
+        Sound = new sound('./assets/large.wav');
+    } else if (name === 'large-voice') {
+        Sound = new sound('./assets/large-voice.wav');
+    } else if (name === 'long') {
+        Sound = new sound('./assets/long.wav');
+    } else if (name === 'long-voice') {
+        Sound = new sound('./assets/long-voice.wav');
+    } else if (name === 'livelost') {
+        Sound = new sound('./assets/livelost.wav');
+    } else if (name === 'downgrade') {
+        Sound = new sound('./assets/downgrade.wav');
     }
     Sound.play();
 }
+
 function checkBallStatus() {
     // if (score >= 2){
     //     ballSizeStatus = "large";
@@ -471,65 +447,65 @@ function checkBallStatus() {
     //     ballStatus = "fire";
     // }
 }
+
 function checkWinStatus() {
-    if(score == totalBricks) {
+    if (score === totalBricks) {
 
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
-function checkBrickCollision(brick){
-    if (x+dx >= brick.x-ballRadius && x+dx <= brick.x+brickWidth+ballRadius) {
-        if ((brick.y-ballRadius - Math.abs(dy) <= y+dy) && (y+dy <= brick.y-ballRadius)) {
-            //alert('top');
-            return "top";
-        }
-        else if ((brick.y+brickHeight+ballRadius + Math.abs(dy) >= y +dy) && (y + dy >= brick.y+brickHeight+ballRadius)){
-            //alert('bottom');
-            return "bottom";
+
+function checkBrickCollision(brick) {
+    if (x + dx >= brick.x - ballRadius && x + dx <= brick.x + brickWidth + ballRadius) {
+        if ((brick.y - ballRadius - Math.abs(dy) <= y + dy) && (y + dy <= brick.y - ballRadius)) {
+            // alert('top');
+            return 'top';
+        } else if ((brick.y + brickHeight + ballRadius + Math.abs(dy) >= y + dy) && (y + dy >= brick.y + brickHeight + ballRadius)) {
+            // alert('bottom');
+            return 'bottom';
         }
     }
-    if(y+dy >= brick.y-ballRadius && y+dy <= brick.y+brickHeight+ballRadius) {
-        if ((x+dx >= brick.x - ballRadius - Math.abs(dx)) && (x+dx <= brick.x - ballRadius)){
-            //console.log('left');
-            return "left";
-        }
-        else if ((x+dx <= brick.x + brickWidth + ballRadius + Math.abs(dx)) && (x+dx >= brick.x + brickWidth + ballRadius)){
-            //console.log('right');
-            return "right";
+    if (y + dy >= brick.y - ballRadius && y + dy <= brick.y + brickHeight + ballRadius) {
+        if ((x + dx >= brick.x - ballRadius - Math.abs(dx)) && (x + dx <= brick.x - ballRadius)) {
+            // console.log('left');
+            return 'left';
+        } else if ((x + dx <= brick.x + brickWidth + ballRadius + Math.abs(dx)) && (x + dx >= brick.x + brickWidth + ballRadius)) {
+            // console.log('right');
+            return 'right';
         }
     }
     return false;
 }
+
 function checkPowerUpCollision(brick) {
 
-    //console.log("in check powerupcollision");
-    if (brick.status == 0){
-        if (brick.Type.type == 5){
-            if (brick.powerup.status == 1){
-                //console.log("Destroyed Type: " + brick.Type.type);
-                //console.log(brick.powerup)
-                powerupY = brick.powerup.y;
-                powerupX = brick.powerup.x;
-                powerupSize = brick.powerup.size;
+    // console.log("in check powerupcollision");
+    if (brick.status === 0) {
+        if (brick.Type.type === 5) {
+            if (brick.powerup.status === 1) {
+                // console.log("Destroyed Type: " + brick.Type.type);
+                // console.log(brick.powerup)
+                const powerupY = brick.powerup.y;
+                const powerupX = brick.powerup.x;
+                const powerupSize = brick.powerup.size;
                 // console.log("Current PowerUp X: " + powerupX);
                 // console.log("Current Paddle X: " + paddleX + " " + (paddleX+paddleWidth));
                 // console.log("Current PowerUp Y: " + powerupY);
                 // console.log("Current Paddle Y: " + paddleY);
-                //console.log(powerupSize);
+                // console.log(powerupSize);
 
 
-                if (powerupX >= paddleX && (powerupX + powerupSize <= paddleX+paddleWidth)){
-                    //console.log("within x range!!!")
+                if (powerupX >= paddleX && (powerupX + powerupSize <= paddleX + paddleWidth)) {
+                    // console.log("within x range!!!")
 
-                    if (powerupY + powerupSize >= paddleY){
-                        return "paddle";
+                    if (powerupY + powerupSize >= paddleY) {
+                        return 'paddle';
                     }
                 }
                 if (powerupY + powerupSize > canvas.height) {
-                    return "wall";
+                    return 'wall';
                 }
             }
         }
@@ -537,62 +513,76 @@ function checkPowerUpCollision(brick) {
     }
 
 }
-function checkPaddleCollision(){
-    //Collision with paddle
-    if (y + dy > paddleY-ballRadius) {
-        if(x + dx > paddleX - ballRadius && x + dx < paddleX + paddleWidth + ballRadius) {
+
+function checkPaddleCollision() {
+    // Collision with paddle
+    if (y + dy > paddleY - ballRadius) {
+        if (x + dx > paddleX - ballRadius && x + dx < paddleX + paddleWidth + ballRadius) {
             return true;
         }
-    }
-    else {
+    } else {
         return false;
     }
 }
-function checkWallCollision(){
-    //Check for collision with walls
-    if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
-        return "side-wall";
-    }
-    if(y + dy < ballRadius) {
-        return "top-wall";
-    }
-    if(y + dy > canvas.height-ballRadius) {
 
-        return "bottom-wall";
+function checkWallCollision() {
+    // Check for collision with walls
+    if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+        return 'side-wall';
+    }
+    if (y + dy < ballRadius) {
+        return 'top-wall';
+    }
+    if (y + dy > canvas.height - ballRadius) {
+
+        return 'bottom-wall';
     }
 }
-function drawWall(){
+
+function drawWall() {
 
 }
-function drawBackground(){
-    var img = new Image();
-    img.src = "assets/background.jpg";
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+const backgroundImage = new Image();
+backgroundImage.src = 'assets/background.jpg';
+
+function drawBackground() {
+    ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 }
+
+const ballImage = new Image();
+ballImage.src = 'assets/ball.png';
+const fireballImage = new Image();
+fireballImage.src = 'assets/fireball.png';
+
 function drawBall() {
     setGlow(false);
     ctx.beginPath();
-    ctx.arc(x, y, ballRadius, 0, Math.PI*2);
-    ctx.fillStyle = "#0095DD";
+    ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+    ctx.fillStyle = '#0095DD';
     ctx.fill();
     ctx.closePath();
-    var img = new Image();
-    if (ballStatus == "fire"){
-        img.src = "assets/fireball.png";
+    let image;
+    if (ballStatus === 'fire') {
+        image = fireballImage;
+    } else if (ballStatus === 'normal') {
+        image = ballImage;
     }
-    else if (ballStatus == "normal"){
-        img.src = "assets/ball.png";
-    }
-    if (ballSizeStatus == 'large'){
+    if (ballSizeStatus === 'large') {
         ballRadius = 15;
-        //img.src = "assets/ball.png";
-    }
-    else if (ballSizeStatus == 'normal') {
+        // img.src = "assets/ball.png";
+    } else if (ballSizeStatus === 'normal') {
         ballRadius = 10;
     }
-    ctx.drawImage(img, x-ballRadius, y-ballRadius, ballRadius*2, ballRadius*2);
+    ctx.drawImage(image, x - ballRadius, y - ballRadius, ballRadius * 2, ballRadius * 2);
 
 }
+
+const paddleImage = new Image();
+paddleImage.src = 'assets/paddle1.png';
+const longPaddleImage = new Image();
+longPaddleImage.src = 'assets/paddle2.png';
+
 function drawPaddle() {
     // ctx.beginPath();
     // ctx.rect(paddleX, paddleY , paddleWidth, paddleHeight);
@@ -600,53 +590,50 @@ function drawPaddle() {
     // ctx.fill();
     // ctx.closePath();
     setGlow(false);
-    var img = new Image();
-    if (paddleSizeStatus == 'normal'){
-        img.src = "assets/paddle1.png";
+    let img;
+    if (paddleSizeStatus === 'normal') {
+        img = paddleImage;
         paddleWidth = 95;
-    }
-    else if (paddleSizeStatus == "long"){
+    } else if (paddleSizeStatus === 'long') {
         ctx.shadowBlur = 20;
-        ctx.shadowColor = "white";
+        ctx.shadowColor = 'white';
         ctx.beginPath();
-        ctx.rect(paddleX+10, paddleY+5 , paddleWidth-10, paddleHeight-10);
-        ctx.fillStyle = "white";
+        ctx.rect(paddleX + 10, paddleY + 5, paddleWidth - 10, paddleHeight - 10);
+        ctx.fillStyle = 'white';
         ctx.fill();
         ctx.closePath();
-        img.src = "assets/paddle2.png";
+        img = longPaddleImage;
         paddleWidth = 125;
     }
     ctx.drawImage(img, paddleX, paddleY, paddleWidth, paddleHeight);
 }
 
 function setGlow(status) {
-    if (status === true){
+    if (status === true) {
         ctx.shadowBlur = 20;
-        ctx.shadowColor = "white";
-    }
-    else {
+        ctx.shadowColor = 'white';
+    } else {
         ctx.shadowBlur = 0;
-        ctx.shadowColor = "";
+        ctx.shadowColor = '';
     }
 }
 
 function drawBricks() {
-    for(var r=0; r<brickRowCount; r++) {
-        for(var c=0; c < maxbrickColumnCount; c++) {
-            var b = bricks[r][c];
+    for (let r = 0; r < brickRowCount; r++) {
+        for (let c = 0; c < maxbrickColumnCount; c++) {
+            const b = bricks[r][c];
 
-            if (b!=null){
-                if(b.status == 1) {
-                    var brickX = (c* (brickWidth+brickPadding))+brickOffsetLeft + bricks[r][0].offset;
-                    var brickY = (r* (brickHeight+brickPadding))+brickOffsetTop;
+            if (b) {
+                if (b.status === 1) {
+                    const brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft + bricks[r][0].offset;
+                    const brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
                     b.x = brickX;
                     b.y = brickY;
-                    if (b.glowVal > 0){
-                        //setGlow(false);
+                    if (b.glowVal > 0) {
+                        // setGlow(false);
                         animateGlow(b.glowVal);
-                        b.glowVal --;
-                    }
-                    else {
+                        b.glowVal--;
+                    } else {
                         setGlow(true);
                     }
                     ctx.beginPath();
@@ -655,19 +642,14 @@ function drawBricks() {
                     ctx.fill();
                     ctx.closePath();
 
+                    const img = getImage(b.Type.path);
+                    ctx.drawImage(img, b.x, b.y, brickWidth, brickHeight);
 
 
-                    var img = new Image();
-                    img.src = b.Type.path;
-                    ctx.drawImage(img, b.x,b.y,brickWidth, brickHeight);
-
-
-                }
-                //If brick is destroyed and it's a special effect brick
-                else {
-                    if (b.Type.type == 5){
+                } else {
+                    if (b.Type.type === 5) {
                         drawPowerUp(b);
-                        b.powerup.x = b.x + 0.5*brickWidth - b.powerup.size;
+                        b.powerup.x = b.x + 0.5 * brickWidth - b.powerup.size;
                         b.powerup.y = b.y + b.powerup.speed;
                         b.powerup.speed += 2;
                     }
@@ -678,12 +660,13 @@ function drawBricks() {
         }
     }
 }
-function drawPowerUp(brick){
-    if (brick.powerup.status == 1){
-        var dy = brick.powerup.speed;
-        if (brick.y + dy <= canvas.height){
+
+function drawPowerUp(brick) {
+    if (brick.powerup.status === 1) {
+        const powerupDy = brick.powerup.speed;
+        if (brick.y + powerupDy <= canvas.height) {
             ctx.beginPath();
-            ctx.rect(brick.powerup.x, brick.y + dy, 20, 20);
+            ctx.rect(brick.powerup.x, brick.y + powerupDy, 20, 20);
             ctx.fillStyle = brick.powerup.color;
             ctx.fill();
             ctx.closePath();
@@ -692,94 +675,94 @@ function drawPowerUp(brick){
 
 
 }
+
 function drawScore() {
-    var fontSize = 27;
-    ctx.font = fontSize + "px Arial";
-    ctx.fillStyle = "#0095DD";
-    ctx.fillText("Score: " + score, 8, fontSize);
+    const fontSize = 27;
+    ctx.font = fontSize + 'px Arial';
+    ctx.fillStyle = '#0095DD';
+    ctx.fillText('Score: ' + score, 8, fontSize);
 
 
 }
-const round = (x, n) =>
-    parseFloat(Math.round(x * Math.pow(10, n)) / Math.pow(10, n)).toFixed(n);
+
+const round = (value, n) =>
+    parseFloat(`${Math.round(value * Math.pow(10, n)) / Math.pow(10, n)}`).toFixed(n);
+
 function drawLives() {
-    var fontSize = 27;
-    ctx.font = fontSize + "px Arial";
-    ctx.fillStyle = "#0095DD";
-    ctx.fillText("Lives: "+lives, canvas.width-fontSize*4, fontSize);
+    const fontSize = 27;
+    ctx.font = fontSize + 'px Arial';
+    ctx.fillStyle = '#0095DD';
+    ctx.fillText('Lives: ' + lives, canvas.width - fontSize * 4, fontSize);
 }
-function drawScoreBoard(){
-    if (checkWinStatus() || lives == 0){
-        var canvas = document.getElementById("myCanvas");
-        var ctx = canvas.getContext("2d");
-        ctx.fillStyle = "blue";
-        ctx.fillRect(boardX,boardY,boardWidth,boardHeight);
-        ctx.fillStyle = "#0095DD";
+
+function drawScoreBoard() {
+    if (checkWinStatus() || lives === 0) {
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(boardX, boardY, boardWidth, boardHeight);
+        ctx.fillStyle = '#0095DD';
 
 
-        //Board Title
-        var fontSize = 35;
-        ctx.font = fontSize + "px Arial";
-        ctx.fillStyle = "red";
-        var titleX = boardX + boardWidth/2 - fontSize*3;
-        var titleY = boardY + boardHeight/7;
-        ctx.fillText("GAME OVER!!!", titleX, titleY);
-        ctx.font = "16px Arial";
+        // Board Title
+        let fontSize = 35;
+        ctx.font = fontSize + 'px Arial';
+        ctx.fillStyle = 'red';
+        const titleX = boardX + boardWidth / 2 - fontSize * 3;
+        const titleY = boardY + boardHeight / 7;
+        ctx.fillText('GAME OVER!!!', titleX, titleY);
+        ctx.font = '16px Arial';
 
 
-        //Draw Score within Board
-        var fontSize = 25;
-        ctx.font = fontSize + "px Arial";
-        ctx.fillStyle = "white";
-        var scoreX = boardX + boardWidth/2 - fontSize*3;
-        var scoreY = boardY + boardHeight/3;
-        ctx.fillText("Your Score: " + score, scoreX, scoreY);
-        ctx.font = "16px Arial";
+        // Draw Score within Board
+        fontSize = 25;
+        ctx.font = fontSize + 'px Arial';
+        ctx.fillStyle = 'white';
+        const scoreX = boardX + boardWidth / 2 - fontSize * 3;
+        const scoreY = boardY + boardHeight / 3;
+        ctx.fillText('Your Score: ' + score, scoreX, scoreY);
+        ctx.font = '16px Arial';
 
-        //Play again button
-        var playWidth = 150;
-        var playHeight = 70;
-        var playX = (boardX + (boardWidth-playWidth)*0.5);
-        var playY = (boardY + boardHeight)*0.8;
-        var playText = "TRY AGAIN";
-        var playButton = new Button(playX, playY, playWidth, playHeight, playText, {
-            'default': {
+        // Play again button
+        const playWidth = 150;
+        const playHeight = 70;
+        const playX = (boardX + (boardWidth - playWidth) * 0.5);
+        const playY = (boardY + boardHeight) * 0.8;
+        const playText = 'TRY AGAIN';
+        const playButton = new Button(playX, playY, playWidth, playHeight, playText, {
+            default: {
                 top: '#1879BD'
             },
-            'hover': {
+            hover: {
                 top: '#2C43EA'
             },
-            'active': {
+            active: {
                 top: '#7C14DD'
             }
-        }, function() {
-
-            animate = function(){}; //no need to render the play button anymore
-            //console.log(animate);
-            console.log("clicked Play");
-            canvas.addEventListener('mouseup', document.location.reload());
-
-
+        }, () => {
+            // console.log(animate);
+            console.log('clicked Play');
+            canvas.addEventListener('mouseup', () => {
+                document.location.reload();
+            });
         });
 
         playButton.update();
         playButton.draw();
 
-        //Paralyze Mouse Movements and Clicks
-        document.removeEventListener("mousemove", mouseMoveHandler);
-        document.removeEventListener("mousedown", startGame);
+        // Paralyze Mouse Movements and Clicks
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mousedown', startGame);
 
-        //disable keyboard movement
-        checkPaddleMovement = function(){};
+        // disable keyboard movement
+        checkPaddleMovement = () => {
+        };
 
-        //play sound according to the situation
-        if (backgroundMusic != null){
+        // play sound according to the situation
+        if (backgroundMusic) {
             backgroundMusic.stop();
-            if (lives == 0){
-                backgroundMusic = new sound('./assets/lose.mp3')
-            }
-            else if (checkWinStatus() == true){
-                backgroundMusic = new sound('./assets/win.mp3')
+            if (lives === 0) {
+                backgroundMusic = new sound('./assets/lose.mp3');
+            } else if (checkWinStatus() === true) {
+                backgroundMusic = new sound('./assets/win.mp3');
             }
             backgroundMusic.play();
             backgroundMusic = null;
@@ -789,84 +772,92 @@ function drawScoreBoard(){
 
 
 }
-function drawClickToStart(){
-    //Ball not moving
-    if (dx == 0 && dy == 0){
-        //console.log("in drawClickToStart");
-        ctx.font = "25px Arial";
-        ctx.fillStyle = "#42f445";
-        ctx.fillText("CLICK TO START!", x - 25*4, canvas.height/2);
+
+function drawClickToStart() {
+    // Ball not moving
+    if (dx === 0 && dy === 0) {
+        // console.log("in drawClickToStart");
+        ctx.font = '25px Arial';
+        ctx.fillStyle = '#42f445';
+        ctx.fillText('CLICK TO START!', x - 25 * 4, canvas.height / 2);
     }
 
-    //requestAnimationFrame(drawClickToStart)
+    // requestAnimationFrame(drawClickToStart)
 
 }
-function drawPlayBtn(){
-    ctx.font = "20px Arial";
-    var playWidth = 300;
-    var playHeight = 80;
-    var playX = (canvas.width-playWidth)/2;
-    var playText = "LET\'S BREAK SOME BRICKS!!"
-    var playButton = new Button(playX, (canvas.height-playHeight)/2, playWidth, playHeight, playText, {
-        'default': {
+
+function drawPlayBtn() {
+    ctx.font = '20px Arial';
+    const playWidth = 300;
+    const playHeight = 80;
+    const playX = (canvas.width - playWidth) / 2;
+    const playText = 'LET\'S BREAK SOME BRICKS!!';
+    const playButton = new Button(playX, (canvas.height - playHeight) / 2, playWidth, playHeight, playText, {
+        default: {
             top: '#1879BD'
         },
-        'hover': {
+        hover: {
             top: '#2C43EA'
         },
-        'active': {
+        active: {
             top: '#7C14DD'
         }
-    }, function() {
-        animate = function(){}; //no need to render the play button anymore
-        console.log("clicked Play");
-        canvas.addEventListener('mouseup', startGame());
-
-
+    }, () => {
+        animate = () => {
+        }; //no need to render the play button anymore
+        console.log('clicked Play');
+        startGame(null);
     });
-    function animate() {
+
+    let animate = () => {
         requestAnimationFrame(animate);
-        //drawScoreBoard();
+        // drawScoreBoard();
         playButton.update();
         playButton.draw();
-    }
+    };
+
     requestAnimationFrame(animate);
 }
-function startGame(e){
+
+function startGame(e) {
     score = 0;
     lives = 3;
     mousePressed = false;
-    //Initialize all the necessary sounds
-    backgroundMusic = new sound("./assets/sample.mp3");
+    // Initialize all the necessary sounds
+    backgroundMusic = new sound('./assets/sample.mp3');
     backgroundMusic.playLoop();
-    //Start Drawing
+    // Start Drawing
     draw();
     canvas.removeEventListener('mousedown', startGame);
-    //Reset position
+    // Reset position
     reset();
 }
-function reset(){
+
+function reset() {
     resetPosition();
-    //drawClickToStart();
+    // drawClickToStart();
     canvas.addEventListener('mousedown', resetSpeed);
 }
-function resetPosition(){
 
-    x = canvas.width/2;
-    y = canvas.height-30;
-    paddleX = (canvas.width-paddleWidth)/2;
+function resetPosition() {
+
+    x = canvas.width / 2;
+    y = canvas.height - 30;
+    paddleX = (canvas.width - paddleWidth) / 2;
     dx = 0;
     dy = 0;
 }
-function resetSpeed(e){
+
+function resetSpeed(e) {
     mousePressed = false;
     setRandomDirection();
-    console.log("dx: " + dx + ' dy: ' + dy);
+    console.log('dx: ' + dx + ' dy: ' + dy);
     canvas.removeEventListener('mousedown', resetSpeed);
 }
+
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); //this can be used as a laser upgrade!
-    //drawPlayBtn();
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // this can be used as a laser upgrade!
+    // drawPlayBtn();
     collisionDetector();
     drawBackground();
     drawBricks();
@@ -876,11 +867,11 @@ function draw() {
     drawLives();
     drawClickToStart();
     drawProgressBar();
-    //drawScoreBoard();
+    // drawScoreBoard();
 
     checkPaddleMovement();
     drawScoreBoard();
-    requestAnimationFrame(draw); //Built-in method that paints objects for every frame
+    requestAnimationFrame(draw); // Built-in method that paints objects for every frame
 }
 
 
@@ -891,7 +882,7 @@ function draw() {
  * lower than max if max isn't an integer).
  * Using Math.round() will give you a non-uniform distribution!
  */
-//Get random ODD int from min to max
+// Get random ODD int from min to max
 function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -899,14 +890,15 @@ function getRandomInt(min, max) {
     // console.log("Min: " + min);
     // console.log("Max: " + max);
 
-    var randNum = Math.floor(Math.random() * (max - min + 1)) + min;
-    while (randNum % 2 == 0){
+    let randNum = Math.floor(Math.random() * (max - min + 1)) + min;
+    while (randNum % 2 === 0) {
         randNum = Math.floor(Math.random() * (max - min + 1)) + min;
-        //console.log("new number: " + randNum);
+        // console.log("new number: " + randNum);
     }
     return randNum;
 }
-//Get random int from min to max
+
+// Get random int from min to max
 function getRandomInt2(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -914,87 +906,85 @@ function getRandomInt2(min, max) {
     // console.log("Min: " + min);
     // console.log("Max: " + max);
 
-    var randNum = Math.floor(Math.random() * (max - min + 1)) + min;
+    const randNum = Math.floor(Math.random() * (max - min + 1)) + min;
     return randNum;
 }
+
+const imageCache = {};
+
+function getImage(path) {
+    let image = imageCache[path];
+    if (!image) {
+        image = new Image();
+        image.src = path;
+        console.log('loaded image', image, 'from path', path);
+        imageCache[path] = image;
+    }
+    return image;
+}
+
 function getRandomType() {
-    var types = [
-        {type: 1, color: "#80ef10", toughness: 1, path: getSpritePath(1, false)},
-        {type: 2, color: "#f4f407", toughness: 2, path: getSpritePath(2, false)},
-        {type: 3, color: "#ed2009", toughness: 3, path: getSpritePath(3, false)},
-        {type: 4, color: "#8c9188", toughness: 100000, path: getSpritePath(4, false)},
-        {type: 5, color: "#2ae0ea", toughness: 3, path: getSpritePath(5, false)},
+    const types = [
+        {type: 1, color: '#80ef10', toughness: 1, path: getSpritePath(1, false)},
+        {type: 2, color: '#f4f407', toughness: 2, path: getSpritePath(2, false)},
+        {type: 3, color: '#ed2009', toughness: 3, path: getSpritePath(3, false)},
+        {type: 4, color: '#8c9188', toughness: 100000, path: getSpritePath(4, false)},
+        {type: 5, color: '#2ae0ea', toughness: 3, path: getSpritePath(5, false)},
     ];
-    //TODO: Set limit for each type
+    // TODO: Set limit for each type
 
     //
-    var index = getRandomInt2(0, types.length-1);
-    //var index = 4;
+    const index = getRandomInt2(0, types.length - 1);
+    // var index = 4;
     return types[index];
 }
-function getRandomPowerUp(){
-    var types = [
-        {type: "fire", size: 20, color: "#ed2009" , path: "", status: 1},
-        {type: "large", size: 20, color: "#2ae0ea", path: "", status: 1},
-        {type: "long", size: 20, color: "#52d868", path: "", status: 1},
+
+function getRandomPowerUp() {
+    const types = [
+        {type: 'fire', size: 20, color: '#ed2009', path: '', status: 1},
+        {type: 'large', size: 20, color: '#2ae0ea', path: '', status: 1},
+        {type: 'long', size: 20, color: '#52d868', path: '', status: 1},
     ];
-    var index = getRandomInt2(0, types.length-1);
-    //var index = 1;
+    const index = getRandomInt2(0, types.length - 1);
+    // var index = 1;
     return types[index];
 }
+
 //    For random layout, check typeof element in the 2D array as "undefined" or not before proceeding to draw it
 //    Also, change column and row if possible
 //    Remove mouse mechanism if possible. It's too funny
-function getSpritePath(type,isCracked){
-    if (isCracked){
-        return "./assets/type" + type +  "cracked.png";
-    }
-    else{
-        return "./assets/type" + type +  ".png";
+function getSpritePath(type, isCracked) {
+    if (isCracked) {
+        return './assets/type' + type + 'cracked.png';
+    } else {
+        return './assets/type' + type + '.png';
     }
 
 }
-function setRandomDirection(){
-    var x = getRandomInt2(-5,5);
-    while (Math.abs(x) > 0 && Math.abs(x) < 2 ){
-        x = getRandomInt2(-5,5);
+
+function setRandomDirection() {
+    let randomX = getRandomInt2(-5, 5);
+    while (Math.abs(randomX) > 0 && Math.abs(randomX) < 2) {
+        randomX = getRandomInt2(-5, 5);
     }
-    var y = getRandomInt2(4,6);
-    dx = x;
-    dy = -y;
+    const randomY = getRandomInt2(4, 6);
+    dx = randomX;
+    dy = -randomY;
 }
-function animateGlow(val){
-    ctx.shadowColor = "blue";
+
+function animateGlow(val) {
+    ctx.shadowColor = 'blue';
     ctx.shadowBlur = val;
 
 }
-//Buttons
+
+// Buttons
 /**
  * A button with hover and active states.
- * @param {integer} x     - X coordinate of the button.
- * @param {integer} y     - Y coordinate of the button.
- * @param {integer} w     - Width of the button.
- * @param {integer} h     - Height of the button.
- * @param {string}  text  - Text on the button.
- * @param {object}  colors - Default, hover, and active colors.
- *
- * @param {object} colors.default - Default colors.
- * @param {string} colors.default.top - Top default button color.
- * @param {string} colors.default.bottom - Bottom default button color.
- *
- * @param {object} colors.hover - Hover colors.
- * @param {string} colors.hover.top - Top hover button color.
- * @param {string} colors.hover.bottom - Bottom hover button color.
- *
- * @param {object} colors.active - Active colors.
- * @param {string} colors.active.top - Top active button color.
- * @param {string} colors.active.bottom - Bottom active button color.
- *
- * @param {function} clickCB - The funciton to call when the button is clicked.
  */
-function Button(x, y, w, h, text, colors, clickCB) {
-    this.x = x;
-    this.y = y;
+function Button(buttonX, buttonY, w, h, text, colors, clickCB) {
+    this.x = buttonX;
+    this.y = buttonY;
     this.width = w;
     this.height = h;
     this.colors = colors;
@@ -1002,12 +992,12 @@ function Button(x, y, w, h, text, colors, clickCB) {
 
     this.state = 'default';  // current button state
 
-    var isClicking = false;
+    let isClicking = false;
 
     /**
      * Check to see if the user is hovering over or clicking on the button.
      */
-    this.update = function() {
+    this.update = () => {
         // check for hover
         if (mousePosition.x >= this.x && mousePosition.x <= this.x + this.width &&
             mousePosition.y >= this.y && mousePosition.y <= this.y + this.height) {
@@ -1021,12 +1011,10 @@ function Button(x, y, w, h, text, colors, clickCB) {
                     clickCB();
                     isClicking = true;
                 }
-            }
-            else {
+            } else {
                 isClicking = false;
             }
-        }
-        else {
+        } else {
             this.state = 'default';
         }
     };
@@ -1034,39 +1022,40 @@ function Button(x, y, w, h, text, colors, clickCB) {
     /**
      * Draw the button.
      */
-    this.draw = function() {
+    this.draw = () => {
         ctx.save();
 
-        var colors = this.colors[this.state];
-        var halfH = this.height / 2;
+        const color = this.colors[this.state];
+        const halfH = this.height / 2;
 
         // button
-        ctx.fillStyle = colors.top;
+        ctx.fillStyle = color.top;
         ctx.fillRect(this.x, this.y, this.width, halfH);
-        ctx.fillStyle = colors.bottom;
+        ctx.fillStyle = color.bottom;
         ctx.fillRect(this.x, this.y + halfH, this.width, halfH);
 
         // text
-        var size = ctx.measureText(this.text);
-        var x = this.x + (this.width - size.width) / 2;
-        var y = this.y + (this.height - 15) / 2 + 12;
+        const size = ctx.measureText(this.text);
+        const textX = this.x + (this.width - size.width) / 2;
+        const textY = this.y + (this.height - 15) / 2 + 12;
 
         ctx.fillStyle = '#FFF';
-        ctx.fillText(this.text, x, y);
+        ctx.fillText(this.text, textX, textY);
 
         ctx.restore();
     };
 }
+
 function sound(src) {
-    this.sound = document.createElement("audio");
+    this.sound = document.createElement('audio');
     this.sound.src = src;
-    this.sound.setAttribute("preload", "auto");
-    this.sound.setAttribute("controls", "none");
-    this.sound.style.display = "none";
+    this.sound.setAttribute('preload', 'auto');
+    this.sound.setAttribute('controls', 'none');
+    this.sound.style.display = 'none';
     document.body.appendChild(this.sound);
-    this.play = function(){
-        //this.sound.play();
-        var promise = this.sound.play();
+    this.play = () => {
+        // this.sound.play();
+        const promise = this.sound.play();
 
         if (promise !== undefined) {
             promise.then(_ => {
@@ -1077,9 +1066,9 @@ function sound(src) {
             });
         }
     };
-    this.playLoop = function(){
-        this.sound.loop=true;
-        var promise = this.sound.play();
+    this.playLoop = () => {
+        this.sound.loop = true;
+        const promise = this.sound.play();
 
         if (promise !== undefined) {
             promise.then(_ => {
@@ -1091,64 +1080,51 @@ function sound(src) {
             });
         }
     };
-    this.stop = function(){
+    this.stop = () => {
         this.sound.pause();
     };
 }
 
-//To do list: Set upgrades and drop items
+// To do list: Set upgrades and drop items
 
 
 //////////////////////////////////////////////////////////////////////////////////
 drawPlayBtn();
-//drawScoreBoard();
-//draw();
+// drawScoreBoard();
+// draw();
 
 
+/////////////////////////////// Progress Bar///////////////////////////////////////
+const particleNo = 10;
 
-///////////////////////////////Progress Bar///////////////////////////////////////
-particle_no = 10;
+let counter = 0;
+let particles = [];
 
-window.requestAnimFrame = (function() {
-    return window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function(callback) {
-            window.setTimeout(callback, 1000 / 60);
-        };
-})();
-
-
-var counter = 0;
-var particles = [];
 function progressbar() {
     this.widths = 0;
     this.hue = 0;
-    this.barX = (canvas.width-maxBarWidth)/2;
+    this.barX = (canvas.width - maxBarWidth) / 2;
     this.barY = 5;
-    this.draw = function() {
+    this.draw = () => {
         ctx.fillStyle = 'hsla(' + this.hue + ', 100%, 40%, 1)';
         ctx.fillRect(this.barX, this.barY, this.widths, 25);
-        var grad = ctx.createLinearGradient(0, 0, 0, 130);
-        grad.addColorStop(0, "transparent");
-        grad.addColorStop(1, "rgba(0,0,0,0.5)");
+        const grad = ctx.createLinearGradient(0, 0, 0, 130);
+        grad.addColorStop(0, 'transparent');
+        grad.addColorStop(1, 'rgba(0,0,0,0.5)');
         ctx.fillStyle = grad;
         ctx.fillRect(this.barX, this.barY, this.widths, 27);
 
-        var fontSize = 27;
+        const fontSize = 27;
 
-        var progressRate = round(((score/totalBricks)*100),0);
-        ctx.font = fontSize + "px Arial";
-        ctx.fillStyle = "white";
-        if (progressRate >= 100){
-            ctx.fillText("Progress: " + progressRate + "%", (canvas.width/2-fontSize*3.3), fontSize);
+        const progressRate = round(((score / totalBricks) * 100), 0);
+        ctx.font = fontSize + 'px Arial';
+        ctx.fillStyle = 'white';
+        if (parseInt(progressRate, 10) >= 100) {
+            ctx.fillText('Progress: ' + progressRate + '%', (canvas.width / 2 - fontSize * 3.3), fontSize);
+        } else {
+            ctx.fillText('Progress: ' + progressRate + '%', (canvas.width / 2 - fontSize * 3), fontSize);
         }
-        else {
-            ctx.fillText("Progress: " + progressRate + "%", (canvas.width/2-fontSize*3), fontSize);
-        }
-    }
+    };
 }
 
 function particle() {
@@ -1160,23 +1136,23 @@ function particle() {
     this.g = 1 + Math.random() * 3;
     this.down = false;
 
-    this.draw = function() {
-        ctx.fillStyle = 'hsla(' + (bar.hue + 0.3) + ', 100%, 40%, 1)';;
-        var size = Math.random()*3;
-        //console.log(bar.barX);
-        ctx.fillRect(this.x, this.y, size, size);
-    }
-}
+    this.draw = () => {
+        ctx.fillStyle = 'hsla(' + (bar.hue + 0.3) + ', 100%, 40%, 1)';
 
+        const size = Math.random() * 3;
+        // console.log(bar.barX);
+        ctx.fillRect(this.x, this.y, size, size);
+    };
+}
 
 
 function drawProgressBar() {
     counter++;
 
     bar.hue += 0.8;
-    //bar.widths = maxBarWidth;
+    // bar.widths = maxBarWidth;
     if (bar.widths > maxBarWidth) {
-        //Reset when time out
+        // Reset when time out
         if (counter > 300) {
             bar.hue = 0;
             bar.widths = 0;
@@ -1189,7 +1165,7 @@ function drawProgressBar() {
         }
     } else {
         bar.draw();
-        for (var i = 0; i < particle_no; i += 10) {
+        for (let i = 0; i < particleNo; i += 10) {
             particles.push(new particle());
         }
     }
@@ -1197,16 +1173,14 @@ function drawProgressBar() {
 }
 
 function update() {
-    for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-        if (p.status == 1){
-            if (p.y <= 40){
+    for (const p of particles) {
+        if (p.status === 1) {
+            if (p.y <= 40) {
                 p.x -= p.vx;
-                if (p.down == true) {
+                if (p.down === true) {
                     p.g += 0.1;
                     p.y += p.g;
-                }
-                else {
+                } else {
                     if (p.g < 0) {
                         p.down = true;
                         p.g += 0.1;
@@ -1218,8 +1192,6 @@ function update() {
                 }
                 p.draw();
             }
-
         }
-
     }
 }
