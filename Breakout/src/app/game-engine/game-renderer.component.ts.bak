@@ -1,0 +1,308 @@
+import {Component, ElementRef, HostListener, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
+
+@Component({
+  selector: 'app-game-engine',
+  templateUrl: './game-renderer.component.html',
+  styleUrls: ['./game-renderer.component.css'],
+})
+export class GameRendererComponent implements OnInit, OnDestroy {
+  @ViewChild('canvas') canvasRef: ElementRef;
+
+  get canvas(): HTMLCanvasElement {
+    return this.canvasRef.nativeElement;
+  }
+
+  get context(): CanvasRenderingContext2D {
+    return this.canvas.getContext('2d');
+  }
+
+  running = false;
+
+  leftPressed = false;
+  rightPressed = false;
+
+  ball = {
+    x: 0,
+    y: 0,
+    dx: 0,
+    dy: 0,
+    radius: 10,
+    render(context) {
+      context.beginPath();
+      context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      context.fillStyle = '#0095DD';
+      context.fill();
+      context.closePath();
+    },
+    update(time) {
+      this.x += this.dx;
+      this.y += this.dy;
+    }
+  };
+
+  clip = {
+    render(context) {
+      // Draw the clip path that will mask everything else
+      // that we'll draw later.
+      context.beginPath();
+      context.moveTo(250, 60);
+      context.lineTo(63.8, 126.4);
+      context.lineTo(92.2, 372.6);
+      context.lineTo(250, 460);
+      context.lineTo(407.8, 372.6);
+      context.lineTo(436.2, 126.4);
+      context.moveTo(250, 104.2);
+      context.lineTo(133.6, 365.2);
+      context.lineTo(177, 365.2);
+      context.lineTo(200.4, 306.8);
+      context.lineTo(299.2, 306.8);
+      context.lineTo(325.2, 365.2);
+      context.lineTo(362.6, 365.2);
+      context.lineTo(250, 104.2);
+      context.moveTo(304, 270.8);
+      context.lineTo(216, 270.8);
+      context.lineTo(250, 189);
+      context.lineTo(284, 270.8);
+      context.clip('evenodd');
+      context.closePath();
+    },
+    update(time) {
+    }
+  };
+
+  particles = {
+    points: [],
+    render(context) {
+      // Draw the points given as input
+      context.beginPath();
+      context.fillStyle = '#DD0031';
+      for (const {x, y} of this.points) {
+        context.moveTo(x, y);
+        context.rect(x, y, 1, 1);
+      }
+      context.fill();
+    },
+    update(time) {
+      this.points = [];
+      for (let i = 0; i < 50000; i++) {
+        this.points.push({
+          x: Math.random() * 500,
+          y: Math.random() * 500
+        });
+      }
+    }
+  };
+
+  paddle = {
+    x: 0,
+    y: 0,
+    width: 75,
+    height: 10,
+    render(context) {
+      context.beginPath();
+      context.rect(this.x, this.y, this.width, this.height);
+      context.fillStyle = '#0095DD';
+      context.fill();
+      context.closePath();
+    },
+    update(time) {
+    }
+  };
+
+  brick = {
+    rowCount: 3,
+    columnCount: 5,
+    width: 75,
+    height: 20,
+    padding: 10,
+    offsetTop: 30,
+    offsetLeft: 30,
+    bricks: [],
+    init() {
+      for (let c = 0; c < this.columnCount; c++) {
+        this.bricks[c] = [];
+        for (let r = 0; r < this.rowCount; r++) {
+          this.bricks[c][r] = {x: 0, y: 0, status: 1};
+        }
+      }
+    },
+    render(ctx) {
+      for (let c = 0; c < this.columnCount; c++) {
+        for (let r = 0; r < this.rowCount; r++) {
+          if (this.bricks[c][r].status === 1) {
+            const x = (c * (this.width + this.padding)) + this.offsetLeft;
+            const y = (r * (this.height + this.padding)) + this.offsetTop;
+            this.bricks[c][r].x = x;
+            this.bricks[c][r].y = y;
+            ctx.beginPath();
+            ctx.rect(x, y, this.width, this.height);
+            ctx.fillStyle = '#0095DD';
+            ctx.fill();
+            ctx.closePath();
+          }
+        }
+      }
+    },
+    collisionDetection(ball) {
+      for (let c = 0; c < this.columnCount; c++) {
+        for (let r = 0; r < this.rowCount; r++) {
+          const b = this.bricks[c][r];
+          if (b.status === 1) {
+            if (ball.x > b.x && ball.x < b.x + this.width && ball.y > b.y && ball.y < b.y + this.height) {
+              ball.dy = -ball.dy;
+              b.status = 0;
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+  };
+
+  score = {
+    x: 0,
+    y: 0,
+    score: 0,
+    render(context) {
+      context.font = '16px Arial';
+      context.fillStyle = '#0095DD';
+      context.fillText('Score: ' + this.score, this.x, this.y);
+    }
+  };
+
+  lives = {
+    x: 0,
+    y: 0,
+    lives: 3,
+    render(ctx) {
+      ctx.font = '16px Arial';
+      ctx.fillStyle = '#0095DD';
+      ctx.fillText('Lives: ' + this.lives, this.x, this.y);
+    }
+  };
+
+  constructor(private ngZone: NgZone) {
+
+  }
+
+  ngOnInit() {
+    this.score.x = 8;
+    this.score.y = 20;
+
+    this.lives.x = this.canvas.width = 65;
+    this.lives.y = 20;
+
+    this.brick.init();
+
+    this.ball.x = this.canvas.width / 2;
+    this.ball.y = this.canvas.height - 30;
+    this.ball.dx = 2;
+    this.ball.dy = -2;
+
+    this.paddle.x = (this.canvas.width - this.paddle.width) / 2;
+    this.paddle.y = this.canvas.height - this.paddle.height;
+
+    this.running = true;
+    this.ngZone.runOutsideAngular(() => this.render(0));
+  }
+
+  ngOnDestroy() {
+    this.running = false;
+  }
+
+  toggle() {
+    this.running = !this.running;
+    this.ngZone.runOutsideAngular(() => this.render(0));
+  }
+
+  @HostListener('window:keydown.arrowLeft', ['$event'])
+  enableLeft(event: KeyboardEvent) {
+    this.leftPressed = true;
+  }
+
+  @HostListener('window:keyup.arrowLeft', ['$event'])
+  disableLeft(event: KeyboardEvent) {
+    this.leftPressed = false;
+  }
+
+  @HostListener('window:keydown.arrowRight', ['$event'])
+  enableRight(event: KeyboardEvent) {
+    this.rightPressed = true;
+  }
+
+  @HostListener('window:keyup.arrowRight', ['$event'])
+  disableRight(event: KeyboardEvent) {
+    this.rightPressed = false;
+  }
+
+  @HostListener('mousemove', ['$event'])
+  mouseMoveHandler(e) {
+    const relativeX = e.clientX - this.canvas.offsetLeft;
+    if (relativeX > 0 && relativeX < this.canvas.width) {
+      this.paddle.x = relativeX - this.paddle.width / 2;
+    }
+  }
+
+  private render(time: number) {
+    if (!this.running) {
+      return;
+    }
+
+    // Clear any previous content.
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.brick.render(this.context);
+
+    this.ball.update(time);
+    this.ball.render(this.context);
+
+    if (this.ball.x + this.ball.dx > this.canvas.width - this.ball.radius || this.ball.x + this.ball.dx < this.ball.radius) {
+      this.ball.dx = -this.ball.dx;
+    }
+    // if (this.ball.y + this.ball.dy > this.canvas.height - this.ball.radius || this.ball.y + this.ball.dy < this.ball.radius) {
+    //   this.ball.dy = -this.ball.dy;
+    // }
+
+    if (this.ball.y + this.ball.dy < this.ball.radius) {
+      this.ball.dy = -this.ball.dy;
+    } else if (this.ball.y + this.ball.dy > this.canvas.height - (this.ball.radius + this.paddle.height)) {
+      if (this.ball.x > this.paddle.x && this.ball.x < this.paddle.x + this.paddle.width) {
+        this.ball.dy = -this.ball.dy;
+      } else {
+        this.lives.lives--;
+        if (this.lives.lives <= 0) {
+          alert('GAME OVER');
+          this.running = false;
+        } else {
+          this.ball.x = this.canvas.width / 2;
+          this.ball.y = this.canvas.height - 30;
+          this.ball.dx = 2;
+          this.ball.dy = -2;
+          this.paddle.x = (this.canvas.width - this.paddle.width) / 2;
+        }
+      }
+    }
+
+    if (this.rightPressed && this.paddle.x < this.canvas.width - this.paddle.width) {
+      this.paddle.x += 7;
+    } else if (this.leftPressed && this.paddle.x > 0) {
+      this.paddle.x -= 7;
+    }
+
+    this.paddle.render(this.context);
+
+    if (this.brick.collisionDetection(this.ball)) {
+      this.score.score++;
+      if (this.score.score === this.brick.rowCount * this.brick.columnCount) {
+        alert('YOU WIN, CONGRATULATIONS!');
+        this.running = false;
+      }
+    }
+    this.score.render(this.context);
+
+    requestAnimationFrame(t => {
+      this.render(t);
+    });
+  }
+}
