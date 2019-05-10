@@ -16,7 +16,7 @@ var maxbrickColumnCount = 5;
 var brickWidth = canvas.width/6;
 var brickHeight = canvas.height/12;
 var brickPadding = 10;
-var brickOffsetTop = 30;
+var brickOffsetTop = 50;
 var brickOffsetLeft = 30;
 var score = 0;
 var lives = 3;
@@ -38,6 +38,10 @@ var boardWidth = 400;
 var boardHeight = 300;
 var boardX = canvas.width/2 - boardWidth/2;
 var boardY = canvas.height/2 - boardHeight/2;
+
+//Progress Bar
+maxBarWidth = 250;
+bar = new progressbar();
 
 function setMargin(column) {
     var offset;
@@ -235,8 +239,8 @@ function collisionFire(){
                         }
                     }
                     else {
-                        console.log("About to call check powerup");
-                        console.log(b.powerup);
+                        //console.log("About to call check powerup");
+                        //console.log(b.powerup);
                         var powerupCollisionStatus = checkPowerUpCollision(b);
                         if (powerupCollisionStatus === "paddle"){
                             b.powerup.status = 0;
@@ -274,7 +278,7 @@ function collisionFire(){
                                     deactivatePowerUp('long');
                                 }, 5000);
                             }
-                            console.log(b.powerup);
+                            //console.log(b.powerup);
                         }
                         else if (powerupCollisionStatus === "wall") {
                             b.powerup.status = 0;
@@ -316,7 +320,9 @@ function collisionNormal() {
                             else {
                                 b.Type.toughness -= ballPower;
                                 score += ballPower;
+
                             }
+                            bar.widths = (maxBarWidth/totalBricks)*score;
                             b.Type.path = getSpritePath(b.Type.type, true);
                             if (b.Type.toughness <=0 ){
                                 b.status = 0;
@@ -335,8 +341,8 @@ function collisionNormal() {
 
                 }
                 else {
-                    console.log("About to call check powerup");
-                    console.log(b.powerup);
+                    //console.log("About to call check powerup");
+                    //console.log(b.powerup);
                     var powerupCollisionStatus = checkPowerUpCollision(b);
                     if (powerupCollisionStatus === "paddle"){
                         b.powerup.status = 0;
@@ -374,7 +380,7 @@ function collisionNormal() {
                                 deactivatePowerUp('long');
                             }, 5000);
                         }
-                        console.log(b.powerup);
+                        //console.log(b.powerup);
                     }
                     else if (powerupCollisionStatus === "wall") {
                         b.powerup.status = 0;
@@ -393,14 +399,17 @@ function activatePowerUp(powerup){
     if (powerup == 'fire'){
         ballStatus = "fire";
         playSound("fire");
+        playSound("fire-voice");
     }
     if (powerup== 'large'){
         ballSizeStatus = 'large';
         playSound("large");
+        playSound("large-voice")
     }
     if (powerup== 'long'){
         paddleSizeStatus = 'long';
         playSound("long");
+        playSound("long-voice")
     }
 }
 function deactivatePowerUp(powerup){
@@ -431,11 +440,20 @@ function playSound(name){
     else if (name == "fire"){
         Sound = new sound("./assets/fire.mp3");
     }
+    else if (name == "fire-voice"){
+        Sound = new sound("./assets/fireball-voice.wav");
+    }
     else if (name == "large"){
         Sound = new sound("./assets/large.wav");
     }
+    else if (name == "large-voice"){
+        Sound = new sound("./assets/large-voice.wav");
+    }
     else if (name == "long"){
         Sound = new sound("./assets/long.wav");
+    }
+    else if (name == "long-voice"){
+        Sound = new sound("./assets/long-voice.wav");
     }
     else if (name == 'livelost'){
         Sound = new sound("./assets/livelost.wav");
@@ -500,7 +518,7 @@ function checkPowerUpCollision(brick) {
                 // console.log("Current Paddle X: " + paddleX + " " + (paddleX+paddleWidth));
                 // console.log("Current PowerUp Y: " + powerupY);
                 // console.log("Current Paddle Y: " + paddleY);
-                console.log(powerupSize);
+                //console.log(powerupSize);
 
 
                 if (powerupX >= paddleX && (powerupX + powerupSize <= paddleX+paddleWidth)){
@@ -583,11 +601,19 @@ function drawPaddle() {
     // ctx.closePath();
     setGlow(false);
     var img = new Image();
-    img.src = "assets/paddle1.png";
     if (paddleSizeStatus == 'normal'){
+        img.src = "assets/paddle1.png";
         paddleWidth = 95;
     }
     else if (paddleSizeStatus == "long"){
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = "white";
+        ctx.beginPath();
+        ctx.rect(paddleX+10, paddleY+5 , paddleWidth-10, paddleHeight-10);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        ctx.closePath();
+        img.src = "assets/paddle2.png";
         paddleWidth = 125;
     }
     ctx.drawImage(img, paddleX, paddleY, paddleWidth, paddleHeight);
@@ -671,7 +697,11 @@ function drawScore() {
     ctx.font = fontSize + "px Arial";
     ctx.fillStyle = "#0095DD";
     ctx.fillText("Score: " + score, 8, fontSize);
+
+
 }
+const round = (x, n) =>
+    parseFloat(Math.round(x * Math.pow(10, n)) / Math.pow(10, n)).toFixed(n);
 function drawLives() {
     var fontSize = 27;
     ctx.font = fontSize + "px Arial";
@@ -845,6 +875,7 @@ function draw() {
     drawScore();
     drawLives();
     drawClickToStart();
+    drawProgressBar();
     //drawScoreBoard();
 
     checkPaddleMovement();
@@ -871,7 +902,7 @@ function getRandomInt(min, max) {
     var randNum = Math.floor(Math.random() * (max - min + 1)) + min;
     while (randNum % 2 == 0){
         randNum = Math.floor(Math.random() * (max - min + 1)) + min;
-        console.log("new number: " + randNum);
+        //console.log("new number: " + randNum);
     }
     return randNum;
 }
@@ -898,7 +929,7 @@ function getRandomType() {
 
     //
     var index = getRandomInt2(0, types.length-1);
-    //var index = 1;
+    //var index = 4;
     return types[index];
 }
 function getRandomPowerUp(){
@@ -908,6 +939,7 @@ function getRandomPowerUp(){
         {type: "long", size: 20, color: "#52d868", path: "", status: 1},
     ];
     var index = getRandomInt2(0, types.length-1);
+    //var index = 1;
     return types[index];
 }
 //    For random layout, check typeof element in the 2D array as "undefined" or not before proceeding to draw it
@@ -924,7 +956,7 @@ function getSpritePath(type,isCracked){
 }
 function setRandomDirection(){
     var x = getRandomInt2(-5,5);
-    while (Math.abs(x) > 0 && Math.abs(x) < 1 ){
+    while (Math.abs(x) > 0 && Math.abs(x) < 2 ){
         x = getRandomInt2(-5,5);
     }
     var y = getRandomInt2(4,6);
@@ -1075,3 +1107,119 @@ drawPlayBtn();
 
 
 ///////////////////////////////Progress Bar///////////////////////////////////////
+particle_no = 10;
+
+window.requestAnimFrame = (function() {
+    return window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        function(callback) {
+            window.setTimeout(callback, 1000 / 60);
+        };
+})();
+
+
+var counter = 0;
+var particles = [];
+function progressbar() {
+    this.widths = 0;
+    this.hue = 0;
+    this.barX = (canvas.width-maxBarWidth)/2;
+    this.barY = 5;
+    this.draw = function() {
+        ctx.fillStyle = 'hsla(' + this.hue + ', 100%, 40%, 1)';
+        ctx.fillRect(this.barX, this.barY, this.widths, 25);
+        var grad = ctx.createLinearGradient(0, 0, 0, 130);
+        grad.addColorStop(0, "transparent");
+        grad.addColorStop(1, "rgba(0,0,0,0.5)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(this.barX, this.barY, this.widths, 27);
+
+        var fontSize = 27;
+
+        var progressRate = round(((score/totalBricks)*100),0);
+        ctx.font = fontSize + "px Arial";
+        ctx.fillStyle = "white";
+        if (progressRate >= 100){
+            ctx.fillText("Progress: " + progressRate + "%", (canvas.width/2-fontSize*3.3), fontSize);
+        }
+        else {
+            ctx.fillText("Progress: " + progressRate + "%", (canvas.width/2-fontSize*3), fontSize);
+        }
+    }
+}
+
+function particle() {
+    this.x = bar.barX + bar.widths;
+    this.y = bar.barY;
+    this.status = 1;
+    this.vx = 0.8 + Math.random() * 1;
+    this.v = Math.random() * 5;
+    this.g = 1 + Math.random() * 3;
+    this.down = false;
+
+    this.draw = function() {
+        ctx.fillStyle = 'hsla(' + (bar.hue + 0.3) + ', 100%, 40%, 1)';;
+        var size = Math.random()*3;
+        //console.log(bar.barX);
+        ctx.fillRect(this.x, this.y, size, size);
+    }
+}
+
+
+
+function drawProgressBar() {
+    counter++;
+
+    bar.hue += 0.8;
+    //bar.widths = maxBarWidth;
+    if (bar.widths > maxBarWidth) {
+        //Reset when time out
+        if (counter > 300) {
+            bar.hue = 0;
+            bar.widths = 0;
+            counter = 0;
+            particles = [];
+        } else {
+            bar.hue = 126;
+            bar.widths = maxBarWidth;
+            bar.draw();
+        }
+    } else {
+        bar.draw();
+        for (var i = 0; i < particle_no; i += 10) {
+            particles.push(new particle());
+        }
+    }
+    update();
+}
+
+function update() {
+    for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        if (p.status == 1){
+            if (p.y <= 40){
+                p.x -= p.vx;
+                if (p.down == true) {
+                    p.g += 0.1;
+                    p.y += p.g;
+                }
+                else {
+                    if (p.g < 0) {
+                        p.down = true;
+                        p.g += 0.1;
+                        p.y += p.g;
+                    } else {
+                        p.y -= p.g;
+                        p.g -= 0.1;
+                    }
+                }
+                p.draw();
+            }
+
+        }
+
+    }
+}
