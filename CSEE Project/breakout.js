@@ -12,7 +12,7 @@ var paddleY = canvas.height-paddleHeight;
 var rightPressed = false;
 var leftPressed = false;
 var brickRowCount = 3;
-var brickColumnCount = 5;
+var maxbrickColumnCount = 5;
 var brickWidth = canvas.width/6;
 var brickHeight = canvas.height/12;
 var brickPadding = 10;
@@ -27,6 +27,9 @@ var brickSound;
 var metalSound;
 var backgroundMusic;
 
+//Ball transformation
+var ballStatus = 'normal';
+var ballSizeStatus = 'normal';
 function setMargin(column) {
     var offset;
     if (column == 1){
@@ -46,7 +49,7 @@ for(var r=0; r<brickRowCount; r++) {
 
     var newColumn = getRandomInt(1,5);
     setMargin(newColumn);
-    // console.log(newColumn);
+    console.log("New Column: " + newColumn);
     // console.log(setMargin(newColumn));
 
     for(var c=0; c<newColumn; c++) {
@@ -58,10 +61,10 @@ for(var r=0; r<brickRowCount; r++) {
             //console.log("Current Required Score: " + totalBricks);
         }
         if (c === 0){
-            bricks[r][0] = { x: 0, y: 0, status: 1, Type: randomType, offset: setMargin(newColumn)};
+            bricks[r][0] = { x: 0, y: 0, status: 1, Type: randomType, offset: setMargin(newColumn), glowVal: 0};
         }
         else {
-            bricks[r][c] = { x: 0, y: 0, status: 1, Type: randomType };
+            bricks[r][c] = { x: 0, y: 0, status: 1, Type: randomType, glowVal: 0 };
         }
 
     }
@@ -136,48 +139,20 @@ function mouseMoveHandler(e) {
         paddleX = relativeX - paddleWidth/2;
     }
 }
-function collisionDetection() {
-    //Collision with Bricks
-    for(var r=0; r<brickRowCount; r++) {
-        for(var c=0; c<brickColumnCount; c++) {
-            var b = bricks[r][c];
-            if (b!= null){
-                if(b.status == 1) {
-                    var collisionPoint = checkBrickCollision(b);
-                    if(collisionPoint != false) {
-                        if (collisionPoint == "left" || collisionPoint == "right"){
-                            dx = -dx;
-                        }
-                        else if (collisionPoint == "top" || collisionPoint == "bottom"){
-                            dy = -dy;
-                        }
-
-                        //console.log("Collided Brick Type: " + b.type)
-                        if (b.Type.type != 4){ //check whether this is a nonbreakable brick
-                            brickSound.play();
-                            b.Type.toughness--;
-                            b.Type.path = getSpritePath(b.Type.type, true);
-                            if (b.Type.toughness <=0 ){
-                                b.status = 0;
-                            }
-                            score++;
-                            if(score == totalBricks) {
-                                alert("YOU WIN, CONGRATS!");
-                                document.location.reload();
-                            }
-                        }
-                        //if collides with an unbreakable brick
-                        else{
-                            metalSound.play();
-                        }
-
-                    }
-                }
-            }
-
-        }
+function collisionDetector(){
+    //Collision with bricks
+    if (ballStatus == "normal"){
+        collisionNormal();
     }
-//    Collision with walls and paddles
+    else if (ballStatus == "fire"){
+        collisionFire();
+    }
+    else {
+        collisionNormal();
+    }
+
+
+    //    Collision with walls and paddles
 
     //Collision with paddle
     if (checkPaddleCollision()){
@@ -202,6 +177,125 @@ function collisionDetection() {
                 reset();
             }
             break;
+    }
+}
+function collisionFire(){
+    //Collision with Bricks
+        for(var r=0; r<brickRowCount; r++) {
+            for(var c=0; c < maxbrickColumnCount; c++) {
+                var b = bricks[r][c];
+                if (b!= null){
+                    if(b.status == 1) {
+                        var collisionPoint = checkBrickCollision(b);
+                        if(collisionPoint != false) {
+                            if (b.Type.type == 4){
+                                //if collides with an unbreakable brick
+                                metalSound.play();
+                                if (collisionPoint == "left" || collisionPoint == "right"){
+                                    dx = -dx;
+                                }
+                                else if (collisionPoint == "top" || collisionPoint == "bottom"){
+                                    dy = -dy;
+                                }
+                            }
+
+                            else {
+                                b.status = 0;
+                                score += b.Type.toughness;
+                                brickSound = new sound("./assets/explode.wav");
+                                brickSound.play();
+                            }
+                            //console.log("Collided Brick Type: " + b.type)
+                                checkBallStatus();
+                                checkWinStatus();
+
+                        }
+                    }
+                }
+
+            }
+        }
+}
+function collisionNormal() {
+    //Collision with Bricks
+    for(var r=0; r<brickRowCount; r++) {
+        for(var c=0; c < maxbrickColumnCount; c++) {
+            var b = bricks[r][c];
+            if (b!= null){
+                if(b.status == 1) {
+                    var collisionPoint = checkBrickCollision(b);
+                    if(collisionPoint != false) {
+                        if (collisionPoint == "left" || collisionPoint == "right"){
+                            dx = -dx;
+                        }
+                        else if (collisionPoint == "top" || collisionPoint == "bottom"){
+                            dy = -dy;
+                        }
+
+                        //console.log("Collided Brick Type: " + b.type)
+                        if (b.Type.type != 4){ //check whether this is a nonbreakable brick
+                            brickSound.play();
+                            b.glowVal = 30;
+                            b.Type.toughness--;
+                            b.Type.path = getSpritePath(b.Type.type, true);
+                            if (b.Type.toughness <=0 ){
+                                b.status = 0;
+                            }
+                            score++;
+                            checkBallStatus();
+                            checkWinStatus();
+
+                        }
+                        //if collides with an unbreakable brick
+                        else{
+                            metalSound.play();
+                        }
+
+                    }
+                }
+            }
+
+        }
+    }
+// //    Collision with walls and paddles
+//
+//     //Collision with paddle
+//     if (checkPaddleCollision()){
+//         dy = -dy;
+//     }
+//     //Check for collision with walls
+//     switch (checkWallCollision()){
+//         case "side-wall":
+//             dx = -dx;
+//             break;
+//         case "top-wall":
+//             dy = -dy;
+//             break;
+//         case "bottom-wall":
+//             lives--;
+//             if(lives <= 0) {
+//                 alert("GAME OVER");
+//                 document.location.reload();
+//             }
+//             else {
+//                 //alert("Live Lost!");
+//                 reset();
+//             }
+//             break;
+//     }
+}
+function checkBallStatus() {
+    if (score >= 2){
+        ballSizeStatus = "large";
+    }
+    if (score >= 4){
+        ballStatus = "fire";
+    }
+}
+function checkWinStatus() {
+    if(score == totalBricks) {
+        alert("YOU WIN, CONGRATS!");
+        document.location.reload();
     }
 }
 function checkBrickCollision(brick){
@@ -267,7 +361,16 @@ function drawBall() {
     ctx.fill();
     ctx.closePath();
     var img = new Image();
-    img.src = "assets/redball.png";
+    if (ballStatus == "fire"){
+        img.src = "assets/fireball.png";
+    }
+    else if (ballStatus == "normal"){
+        img.src = "assets/ball.png";
+    }
+    if (ballSizeStatus == 'large'){
+        ballRadius = 15;
+        //img.src = "assets/ball.png";
+    }
     ctx.drawImage(img, x-ballRadius, y-ballRadius, ballRadius*2, ballRadius*2);
 
 }
@@ -296,21 +399,31 @@ function setGlow(status) {
 
 function drawBricks() {
     for(var r=0; r<brickRowCount; r++) {
-        for(var c=0; c<brickColumnCount; c++) {
+        for(var c=0; c < maxbrickColumnCount; c++) {
             var b = bricks[r][c];
+
             if (b!=null){
                 if(b.status == 1) {
                     var brickX = (c* (brickWidth+brickPadding))+brickOffsetLeft + bricks[r][0].offset;
                     var brickY = (r* (brickHeight+brickPadding))+brickOffsetTop;
                     b.x = brickX;
                     b.y = brickY;
+                    if (b.glowVal > 0){
+                        //setGlow(false);
+                        animateGlow(b.glowVal);
+                        b.glowVal --;
+                    }
+                    else {
+                        setGlow(true);
+                    }
                     ctx.beginPath();
                     ctx.rect(brickX, brickY, brickWidth, brickHeight);
                     ctx.fillStyle = b.Type.color;
                     ctx.fill();
                     ctx.closePath();
 
-                    setGlow(true);
+
+
                     var img = new Image();
                     img.src = b.Type.path;
                     ctx.drawImage(img, b.x,b.y,brickWidth, brickHeight);
@@ -417,7 +530,7 @@ function draw() {
     drawScore();
     drawLives();
     drawClickToStart();
-    collisionDetection();
+    collisionDetector();
     checkPaddleMovement();
     requestAnimationFrame(draw); //Built-in method that paints objects for every frame
 }
@@ -479,12 +592,19 @@ function getSpritePath(type,isCracked){
 
 }
 function setRandomDirection(){
-    var x = getRandomInt2(3,5);
-    var y = getRandomInt2(3,5);
+    var x = getRandomInt2(-5,5);
+    while (Math.abs(x) > 0 && Math.abs(x) < 1 ){
+        x = getRandomInt2(-5,5);
+    }
+    var y = getRandomInt2(4,6);
     dx = x;
     dy = -y;
 }
+function animateGlow(val){
+    ctx.shadowColor = "blue";
+    ctx.shadowBlur = val;
 
+}
 //Buttons
 /**
  * A button with hover and active states.
@@ -582,7 +702,6 @@ function sound(src) {
     this.sound.style.display = "none";
     document.body.appendChild(this.sound);
     this.play = function(){
-        console.log("inplay");
         this.sound.play();
     };
     this.playLoop = function(){
@@ -594,7 +713,7 @@ function sound(src) {
     };
 }
 
-//To do list: Set random color and toughness
+//To do list: Set upgrades and drop items
 
 
 //////////////////////////////////////////////////////////////////////////////////
