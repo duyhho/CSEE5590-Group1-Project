@@ -11,7 +11,7 @@ var paddleX = (canvas.width-paddleWidth)/2;
 var paddleY = canvas.height-paddleHeight;
 var rightPressed = false;
 var leftPressed = false;
-var brickRowCount = 4;
+var brickRowCount = 3;
 var brickColumnCount = 5;
 var brickWidth = canvas.width/6;
 var brickHeight = canvas.height/12;
@@ -43,23 +43,29 @@ for(var r=0; r<brickRowCount; r++) {
     bricks[r] = [];
 
     var newColumn = getRandomInt(1,5);
-    totalBricks += newColumn;
     setMargin(newColumn);
-    console.log(newColumn);
-    console.log(setMargin(newColumn));
+    // console.log(newColumn);
+    // console.log(setMargin(newColumn));
 
     for(var c=0; c<newColumn; c++) {
+        var randomType = getRandomType();
+        if (randomType.type != 4){
+            console.log("Countable Brick Type: " + randomType.type);
+
+            totalBricks += randomType.type;
+            //console.log("Current Required Score: " + totalBricks);
+        }
         if (c === 0){
-            bricks[r][0] = { x: 0, y: 0, status: 1, type: getRandomType(), offset: setMargin(newColumn)};
+            bricks[r][0] = { x: 0, y: 0, status: 1, Type: randomType, offset: setMargin(newColumn)};
         }
         else {
-            bricks[r][c] = { x: 0, y: 0, status: 1, type: getRandomType() };
+            bricks[r][c] = { x: 0, y: 0, status: 1, Type: randomType };
         }
 
     }
 }
+console.log("Total Bricks: " + totalBricks);
 console.log(bricks);
-
 // for(var c=0; c<brickColumnCount; c++) {
 //     bricks[c] = [];
 //     for(var r=0; r<brickRowCount; r++) {
@@ -135,14 +141,30 @@ function collisionDetection() {
             var b = bricks[r][c];
             if (b!= null){
                 if(b.status == 1) {
-                    if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
-                        dy = -dy;
-                        b.status = 0;
-                        score++;
-                        if(score == totalBricks) {
-                            alert("YOU WIN, CONGRATS!");
-                            document.location.reload();
+                    var collisionPoint = checkBrickCollision(b);
+                    console.log(collisionPoint);
+                    if(collisionPoint != false) {
+                        if (collisionPoint == "left" || collisionPoint == "right"){
+                            dx = -dx;
                         }
+                        else if (collisionPoint == "top" || collisionPoint == "bottom"){
+                            dy = -dy;
+                        }
+
+                        //console.log("Collided Brick Type: " + b.type)
+                        if (b.Type.type != 4){ //check whether this is a nonbreakable brick
+
+                            b.Type.toughness--;
+                            if (b.Type.toughness <=0 ){
+                                b.status = 0;
+                            }
+                            score++;
+                            if(score == totalBricks) {
+                                alert("YOU WIN, CONGRATS!");
+                                document.location.reload();
+                            }
+                        }
+
                     }
                 }
             }
@@ -150,20 +172,20 @@ function collisionDetection() {
         }
     }
 //    Collision with walls and paddles
-    //Check for collision with walls
-    if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
-        dx = -dx;
-    }
-    if(y + dy < ballRadius) {
+
+    //Collision with paddle
+    if (checkPaddleCollision()){
         dy = -dy;
     }
-    if (y + dy > paddleY-ballRadius) {
-        if(x > paddleX && x < paddleX + paddleWidth) {
+    //Check for collision with walls
+    switch (checkWallCollision()){
+        case "side-wall":
+            dx = -dx;
+            break;
+        case "top-wall":
             dy = -dy;
-        }
-    }
-    if(y + dy > canvas.height-ballRadius) {
-        //Collision with paddle
+            break;
+        case "bottom-wall":
             lives--;
             if(lives <= 0) {
                 alert("GAME OVER");
@@ -173,9 +195,56 @@ function collisionDetection() {
                 //alert("Live Lost!");
                 reset();
             }
+            break;
     }
 }
+function checkBrickCollision(brick){
+    if (x+dx >= brick.x-ballRadius && x+dx <= brick.x+brickWidth+ballRadius) {
+        if ((brick.y-ballRadius - Math.abs(dy) <= y+dy) && (y+dy <= brick.y-ballRadius)) {
+            //alert('top');
+            return "top";
+        }
+        else if ((brick.y+brickHeight+ballRadius + Math.abs(dy) >= y +dy) && (y + dy >= brick.y+brickHeight+ballRadius)){
+            //alert('bottom');
+            return "bottom";
+        }
+    }
+    if(y+dy >= brick.y-ballRadius && y+dy <= brick.y+brickHeight+ballRadius) {
+        if ((x+dx >= brick.x - ballRadius - Math.abs(dx)) && (x+dx <= brick.x - ballRadius)){
+            //console.log('left');
+            return "left";
+        }
+        else if ((x+dx <= brick.x + brickWidth + ballRadius + Math.abs(dx)) && (x+dx >= brick.x + brickWidth + ballRadius)){
+            //console.log('right');
+            return "right";
+        }
+    }
+    return false;
+}
+function checkPaddleCollision(){
+    //Collision with paddle
+    if (y + dy > paddleY-ballRadius) {
+        if(x + dx > paddleX - ballRadius && x + dx < paddleX + paddleWidth + ballRadius) {
+            return true;
+        }
+    }
+    else {
+        return false;
+    }
+}
+function checkWallCollision(){
+    //Check for collision with walls
+    if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
+        return "side-wall";
+    }
+    if(y + dy < ballRadius) {
+        return "top-wall";
+    }
+    if(y + dy > canvas.height-ballRadius) {
 
+        return "bottom-wall";
+    }
+}
 function drawBall() {
     ctx.beginPath();
     ctx.arc(x, y, ballRadius, 0, Math.PI*2);
@@ -195,14 +264,14 @@ function drawBricks() {
         for(var c=0; c<brickColumnCount; c++) {
             var b = bricks[r][c];
             if (b!=null){
-                if(bricks[r][c].status == 1) {
+                if(b.status == 1) {
                     var brickX = (c* (brickWidth+brickPadding))+brickOffsetLeft + bricks[r][0].offset;
                     var brickY = (r* (brickHeight+brickPadding))+brickOffsetTop;
-                    bricks[r][c].x = brickX;
-                    bricks[r][c].y = brickY;
+                    b.x = brickX;
+                    b.y = brickY;
                     ctx.beginPath();
                     ctx.rect(brickX, brickY, brickWidth, brickHeight);
-                    ctx.fillStyle = bricks[r][c].type.color;
+                    ctx.fillStyle = bricks[r][c].Type.color;
                     ctx.fill();
                     ctx.closePath();
                 }
@@ -316,8 +385,8 @@ function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
 
-    console.log("Min: " + min);
-    console.log("Max: " + max);
+    // console.log("Min: " + min);
+    // console.log("Max: " + max);
 
     var randNum = Math.floor(Math.random() * (max - min + 1)) + min;
     while (randNum % 2 == 0){
@@ -331,18 +400,18 @@ function getRandomInt2(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
 
-    console.log("Min: " + min);
-    console.log("Max: " + max);
+    // console.log("Min: " + min);
+    // console.log("Max: " + max);
 
     var randNum = Math.floor(Math.random() * (max - min + 1)) + min;
     return randNum;
 }
 function getRandomType() {
     var types = [
-        {type: 0, color: "#ed2009"},
-        {type: 1, color: "#f4f407"},
-        {type: 2, color: "#80ef10"},
-        {type: 3, color: "#8c9188"},
+        {type: 1, color: "#ed2009", toughness: 1, path: getSpritePath(1, false)},
+        {type: 2, color: "#f4f407", toughness: 2, path: getSpritePath(2, false)},
+        {type: 3, color: "#80ef10", toughness: 3, path: getSpritePath(3, false)},
+        {type: 4, color: "#8c9188", toughness: 100000, path: getSpritePath(4, false)},
     ];
     var index = getRandomInt2(0, types.length-1);
     return types[index];
@@ -350,7 +419,15 @@ function getRandomType() {
 //    For random layout, check typeof element in the 2D array as "undefined" or not before proceeding to draw it
 //    Also, change column and row if possible
 //    Remove mouse mechanism if possible. It's too funny
+function getSpritePath(type,isCracked){
+    if (isCracked){
+        return "assets/type" + type +  "cracked.png";
+    }
+    else{
+        return "assets/type" + type +  ".png";
+    }
 
+}
 
 
 //Buttons
