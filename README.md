@@ -1,5 +1,5 @@
 # CSEE5590-Group1-Project
-![](documentation/main_screen.png)
+![](./documentation/main_screen.png)
 ## Breakout
 _Built with:_
 * Angular
