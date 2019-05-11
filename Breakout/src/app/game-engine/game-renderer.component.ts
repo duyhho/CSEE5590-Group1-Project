@@ -843,6 +843,23 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       const playHeight = 80;
       const playX = (canvas.width - playWidth) / 2;
       const playText = 'LET\'S BREAK SOME BRICKS!!';
+      const helpText = 'HELP';
+      const helpButton = new Button(playX, (canvas.height - playHeight) / 2 - 80, playWidth, playHeight, helpText, {
+        default: {
+          top: '#1879BD'
+        },
+        hover: {
+          top: '#2C43EA'
+        },
+        active: {
+          top: '#7C14DD'
+        }
+      }, () => {
+        animate = () => {
+        }; // no need to render the play button anymore
+        console.log('clicked Play');
+        helpMe();
+      });
       const playButton = new Button(playX, (canvas.height - playHeight) / 2, playWidth, playHeight, playText, {
         default: {
           top: '#1879BD'
@@ -865,6 +882,8 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         // drawScoreBoard();
         playButton.update();
         playButton.draw();
+        helpButton.update();
+        helpButton.draw();
       };
 
       requestAnimationFrame(animate);
@@ -937,7 +956,22 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       requestAnimationFrame(draw); // Built-in method that paints objects for every frame
     }
 
+    function helpMe(){
+      const ctx2 = canvas.getContext('2d');
+      ctx2.fillStyle = 'blue';
+      ctx2.fillRect(boardX, boardY, boardWidth, boardHeight);
+      ctx2.fillStyle = '#0095DD';
 
+
+      // Board Title
+      let fontSize = 35;
+      ctx2.font = fontSize + 'px Arial';
+      ctx2.fillStyle = 'red';
+      const titleX = boardX + boardWidth / 2 - fontSize * 3;
+      const titleY = boardY  + boardHeight / 7;
+      ctx2.fillText('HELP ME PLEASE', titleX, titleY);
+      ctx2.font = '16px Arial';
+    }
     /**
      * Returns a random integer between min (inclusive) and max (inclusive).
      * The value is no lower than min (or the next integer greater than min
