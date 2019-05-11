@@ -14,14 +14,8 @@ export class UserListComponent implements OnInit {
 
   ngOnInit() {
     this.users = [];
-
-    this.userService.getUsers().subscribe(data => {
-      this.users = data.map(e => {
-        return {
-          id: e.payload.doc.id,
-          ...e.payload.doc.data()
-        } as User;
-      });
+    this.userService.getUsers().subscribe(users => {
+      this.users = users;
     });
   }
 
@@ -42,8 +36,7 @@ export class UserListComponent implements OnInit {
   }
 
   getFormattedDate(timestamp) {
-    const date = new Date(1970, 0, 0);
-    date.setSeconds(timestamp.seconds);
+    const date =  new Date(timestamp ? (timestamp.seconds * 1000) : Date.now()) ;
 
     return date.toDateString()
       .split(' ')

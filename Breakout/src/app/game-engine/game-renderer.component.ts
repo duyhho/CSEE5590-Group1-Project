@@ -1,6 +1,9 @@
 import {Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Images, Sounds} from './assets';
 import {Brick, BrickType} from './brick';
+import {UserService} from '../user/user.service';
+import {MatDialog} from '@angular/material';
+import {UsernamePromptComponent} from '../username-prompt/username-prompt.component';
 
 @Component({
   selector: 'app-game-engine',
@@ -14,7 +17,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     return this.canvasRef.nativeElement;
   }
 
-  constructor(private ngZone: NgZone) {
+  constructor(private ngZone: NgZone, private userService: UserService, public dialog: MatDialog) {
   }
 
   ngOnInit() {
@@ -22,6 +25,30 @@ export class GameRendererComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+  }
+
+  postHighScore(score: number): void {
+    this.ngZone.run(() => {
+      console.log('post score', score);
+      // this.userService.getUsers().toPromise().then(users => {
+      // console.log('got users', users);
+      // const lastPlace = users[users.length - 1];
+      // if (users.length < 10 || score > lastPlace.score) {
+      console.log('do the post!!');
+      const dialogRef = this.dialog.open(UsernamePromptComponent, {
+        width: '250px',
+        data: {score}
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        console.log('result', result);
+        if (result.name) {
+          this.userService.createUser(result);
+        }
+      });
+      // }
+      // });
+    });
   }
 
   run() {
@@ -676,6 +703,8 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       ctx.fillText('Lives: ' + lives, canvas.width - fontSize * 4, fontSize);
     }
 
+    const self = this;
+
     function drawScoreBoard() {
       if (lives === 0) {
         ctx.fillStyle = 'blue';
@@ -741,6 +770,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
         // play sound according to the situation
         if (backgroundMusic) {
+          self.postHighScore(scores);
           backgroundMusic.stop();
           if (lives === 0) {
             backgroundMusic = Sounds.lose;

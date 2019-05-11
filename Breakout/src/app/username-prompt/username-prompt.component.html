@@ -1,0 +1,10 @@
+<h1 mat-dialog-title>High Score {{data.score}}!!</h1>
+<div mat-dialog-content>
+  <p>You got a new high score!</p>
+  <label>
+    Name: <input type="text" name="name" [(ngModel)]="username">
+  </label>
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="user">Ok</button>
+</div>

@@ -1,7 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
 @import url('https://fonts.googleapis.com/css?family=Gugi|Kalam|Nothing+You+Could+Do|Shadows+Into+Light|Yellowtail');
 
+html, body { height: 100%; }
 body {
+  margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif;
   background: rgba(46, 49, 49, 1);
   color: white;
 }
