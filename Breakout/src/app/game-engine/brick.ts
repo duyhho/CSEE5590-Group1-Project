@@ -36,13 +36,24 @@ function toughness(type: BrickType): number {
 }
 
 export function randomType() {
-  const enumValues = Object.keys(BrickType)
+  const types = Object.keys(BrickType)
     .map(n => Number.parseInt(n, 10))
     .filter(n => !Number.isNaN(n));
 
-  const min = 0;
-  const max = enumValues.length - 1;
+  const level = parseInt(localStorage.getItem('level'), 10);
+  if (level === 1) {
+    return types[getRandomInt2(0, types.length - 5)];
+  }
+  if (level === 2) {
+    return types[getRandomInt2(0, types.length - 3)];
+  }
 
-  const index = Math.floor(Math.random() * (max - min + 1)) + min;
-  return enumValues[index];
+  return types[getRandomInt2(0, types.length - 1)];
+}
+
+function getRandomInt2(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }

@@ -46,10 +46,16 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     const brickOffsetTop = 50;
     const brickOffsetLeft = 30;
     let score = 0;
+    let scores = 0;
     let lives = 3;
     let totalBricks = 0;
     const bricks: Brick[][] = [];
     let backgroundMusic;
+    let level = 1;
+    if (localStorage.getItem('level') !== '1') {
+      level = parseInt(localStorage.getItem('level'), 10);
+    }
+    let levelChecker = true;
 
 // Ball transformation
     let ballStatus = 'normal';
@@ -246,6 +252,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                 } else {
                   b.status = 0;
                   score += b.toughness;
+                  scores += b.toughness;
                   Sounds.brickBurnt.play();
                 }
                 // console.log("Collided Brick Type: " + b.type)
@@ -329,10 +336,12 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                   b.glowVal = 30;
                   if (b.toughness < ballPower) {
                     score += b.toughness;
+                    scores += b.toughness;
                     b.toughness = 0;
                   } else {
                     b.toughness -= ballPower;
                     score += ballPower;
+                    scores += ballPower;
 
                   }
                   bar.widths = (maxBarWidth / totalBricks) * score;
@@ -652,7 +661,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       const fontSize = 27;
       ctx.font = fontSize + 'px Arial';
       ctx.fillStyle = '#0095DD';
-      ctx.fillText('Score: ' + score, 8, fontSize);
+      ctx.fillText('Score: ' + scores, 8, fontSize);
 
 
     }
@@ -668,7 +677,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     }
 
     function drawScoreBoard() {
-      if (checkWinStatus() || lives === 0) {
+      if (lives === 0) {
         ctx.fillStyle = 'blue';
         ctx.fillRect(boardX, boardY, boardWidth, boardHeight);
         ctx.fillStyle = '#0095DD';
@@ -690,7 +699,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         ctx.fillStyle = 'white';
         const scoreX = boardX + boardWidth / 2 - fontSize * 3;
         const scoreY = boardY + boardHeight / 3;
-        ctx.fillText('Your Score: ' + score, scoreX, scoreY);
+        ctx.fillText('Your Score: ' + scores, scoreX, scoreY);
         ctx.font = '16px Arial';
 
         // Play again button
@@ -699,6 +708,8 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         const playX = (boardX + (boardWidth - playWidth) * 0.5);
         const playY = (boardY + boardHeight) * 0.8;
         const playText = 'TRY AGAIN';
+        localStorage.setItem('level', '1');
+        localStorage.setItem('scores', '0');
         const playButton = new Button(playX, playY, playWidth, playHeight, playText, {
           default: {
             top: '#1879BD'
@@ -740,6 +751,74 @@ export class GameRendererComponent implements OnInit, OnDestroy {
           backgroundMusic = null;
         }
 
+      } else if (checkWinStatus()) {
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(boardX, boardY, boardWidth, boardHeight);
+        ctx.fillStyle = '#0095DD';
+
+        // level changes
+        if (levelChecker === true) {
+          level = level + 1;
+          localStorage.setItem('level', level.toString());
+          localStorage.setItem('scores', scores.toString());
+        }
+        levelChecker = false;
+
+        const fontSize = 35;
+        ctx.font = fontSize + 'px Arial';
+        ctx.fillStyle = 'red';
+        const titleX = boardX + boardWidth / 2 - fontSize * 5 + fontSize / 2;
+        const titleY = boardY + boardHeight / 7;
+        ctx.fillText('LEVEL COMPLETE!', titleX, titleY);
+        ctx.font = '16px Arial';
+        // drawClickToStart()
+        const playWidth = 150;
+        const playHeight = 70;
+        const playX = (boardX + (boardWidth - playWidth) * 0.5);
+        const playY = (boardY + boardHeight) * 0.8;
+        const playText = 'Play level ' + level;
+
+
+        const playButton = new Button(playX, playY, playWidth, playHeight, playText, {
+          default: {
+            top: '#1879BD'
+          },
+          hover: {
+            top: '#2C43EA'
+          },
+          active: {
+            top: '#7C14DD'
+          }
+        }, () => {
+          // console.log(animate);
+          console.log('clicked Play');
+          canvas.addEventListener('mouseup', () => {
+            document.location.reload();
+          });
+        });
+
+        playButton.update();
+        playButton.draw();
+
+        // Paralyze Mouse Movements and Clicks
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mousedown', startGame);
+
+        // disable keyboard movement
+        checkPaddleMovement = () => {
+        };
+
+        // play sound according to the situation
+        if (backgroundMusic) {
+          backgroundMusic.stop();
+          if (lives === 0) {
+            backgroundMusic = Sounds.lose;
+          } else if (checkWinStatus() === true) {
+            backgroundMusic = Sounds.win;
+          }
+          backgroundMusic.play();
+          backgroundMusic = null;
+        }
       }
 
 
@@ -751,7 +830,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         // console.log("in drawClickToStart");
         ctx.font = '25px Arial';
         ctx.fillStyle = '#42f445';
-        ctx.fillText('CLICK TO START!', x - 25 * 4, canvas.height / 2);
+        ctx.fillText('CLICK TO START LEVEL ' + level, x - 25 * 6, canvas.height / 2);
       }
 
       // requestAnimationFrame(drawClickToStart)
@@ -792,8 +871,15 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     }
 
     function startGame() {
-      score = 0;
-      lives = 3;
+      if (localStorage.getItem('level') === '1') {
+        score = 0;
+        scores = 0;
+        lives = 3;
+      } else {
+        scores = parseInt(localStorage.getItem('scores'), 10) || 0;
+        score = 0;
+        lives = 3;
+      }
       mousePressed = false;
       // Initialize all the necessary sounds
       backgroundMusic = Sounds.music;
@@ -828,6 +914,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     }
 
     function draw() {
+      if (localStorage.getItem('level') !== '1') {
+        level = parseInt(localStorage.getItem('level'), 10) || 1;
+      }
       ctx.clearRect(0, 0, canvas.width, canvas.height); // this can be used as a laser upgrade!
       // drawPlayBtn();
       if (lives) {
