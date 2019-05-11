@@ -13,7 +13,7 @@ export class UserService {
   }
 
   createUser(user: User) {
-    return this.firestore.collection('users').add({...user});
+    return this.firestore.collection('users').add(user);
   }
 
   updateUser(user: User) {
