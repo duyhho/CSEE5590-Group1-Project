@@ -8,11 +8,13 @@ import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { GameRendererComponent } from './game-engine/game-renderer.component';
+import { UserListComponent } from './user-list/user-list.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    GameRendererComponent
+    GameRendererComponent,
+    UserListComponent
   ],
   imports: [
     BrowserModule,
