@@ -38,6 +38,6 @@ export class UserListComponent implements OnInit {
   }
 
   getSortedScores() {
-    return this.users.sort((a: User, b: User) => a.score > b.score ? -1 : b.score > a.score ? 1 : 0);
+    return this.users.sort((a: User, b: User) => a.score > b.score ? -1 : b.score > a.score ? 1 : 0).slice(0, 10);
   }
 }

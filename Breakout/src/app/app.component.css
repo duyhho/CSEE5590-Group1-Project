@@ -1,0 +1,7 @@
+.title {
+  font-family: 'Gugi', cursive;
+  user-select: none;
+  font-size: 4em;
+  text-transform: uppercase;
+  text-align: center;
+}
