@@ -1,3 +1,14 @@
-<p>
-  user-list works!
-</p>
+<div class="wrap">
+  <table>
+    <thead>
+    <th colspan="2">High Scores</th>
+    </thead>
+    <tbody>
+    <tr *ngFor="let user of getSortedScores()">
+      <td>{{user.name}}</td>
+      <td>{{user.score}}</td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+

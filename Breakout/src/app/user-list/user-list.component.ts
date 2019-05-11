@@ -13,6 +13,8 @@ export class UserListComponent implements OnInit {
   constructor(private userService: UserService) { }
 
   ngOnInit() {
+    this.users = [];
+
     this.userService.getUsers().subscribe(data => {
       this.users = data.map(e => {
         return {
@@ -33,5 +35,9 @@ export class UserListComponent implements OnInit {
 
   delete(id: string) {
     this.userService.deleteUser(id);
+  }
+
+  getSortedScores() {
+    return this.users.sort((a: User, b: User) => a.score > b.score ? -1 : b.score > a.score ? 1 : 0);
   }
 }
