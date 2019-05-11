@@ -607,6 +607,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         img = Images.paddle;
         paddleWidth = 95;
       } else if (paddleSizeStatus === 'long') {
+        ctx.save();
         ctx.shadowBlur = 20;
         ctx.shadowColor = 'white';
         ctx.beginPath();
@@ -614,6 +615,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.closePath();
+        ctx.restore();
         img = Images.longPaddle;
         paddleWidth = 125;
       }
