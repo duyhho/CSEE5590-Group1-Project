@@ -20,11 +20,11 @@ export class UserService {
 
   updateUser(user: User) {
     delete user.id;
-    this.firestore.doc('users/' + user.id).update(user);
+    this.firestore.doc(`users/${user.id}`).update(user);
   }
 
   deleteUser(id: string) {
-    this.firestore.doc('users/' + id).delete();
+    this.firestore.doc(`users/${id}`).delete();
   }
 }
 
