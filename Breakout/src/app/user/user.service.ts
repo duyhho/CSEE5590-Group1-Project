@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { User } from 'src/app/user/user.model';
+import * as firebase from 'firebase';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +14,7 @@ export class UserService {
   }
 
   createUser(user: User) {
+    user.timestamp = firebase.firestore.FieldValue.serverTimestamp();
     return this.firestore.collection('users').add(user);
   }
 
