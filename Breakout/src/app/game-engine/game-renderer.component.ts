@@ -1,4 +1,6 @@
 import {Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Images, Sounds} from './assets';
+import {Brick, BrickType} from './brick';
 
 @Component({
   selector: 'app-game-engine',
@@ -12,13 +14,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     return this.canvasRef.nativeElement;
   }
 
-  //
-  // get context(): CanvasRenderingContext2D {
-  //   return this.canvas.getContext('2d');
-  // }
-
   constructor(private ngZone: NgZone) {
-
   }
 
   ngOnInit() {
@@ -51,9 +47,8 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     const brickOffsetLeft = 30;
     let score = 0;
     let lives = 3;
-    const gamePaused = true;
     let totalBricks = 0;
-    const bricks = [];
+    const bricks: Brick[][] = [];
     let backgroundMusic;
 
 // Ball transformation
@@ -72,7 +67,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
 // Progress Bar
     const maxBarWidth = 250;
-    const bar = new progressbar();
+    const bar = new ProgressBar();
 
     function setMargin(column) {
       let offset;
@@ -96,22 +91,21 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       // console.log(setMargin(newColumn));
 
       for (let c = 0; c < newColumn; c++) {
-        const randomType = getRandomType();
-        if (randomType.type !== 4) {
-          console.log('Countable Brick Type: ' + randomType.type);
+        const brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft + setMargin(newColumn);
+        const brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
+        const brick = new Brick(brickX, brickY, brickWidth, brickHeight);
+        bricks[r][c] = brick;
 
-          totalBricks += randomType.toughness;
+        if (brick.type !== BrickType.SILVER) {
+          console.log('Countable Brick Type: ' + brick.type);
+
+          totalBricks += brick.toughness;
           // console.log("Current Required Score: " + totalBricks);
         }
-        if (c === 0) {
-          bricks[r][0] = {x: 0, y: 0, status: 1, Type: randomType, offset: setMargin(newColumn), glowVal: 0};
-        } else {
-          bricks[r][c] = {x: 0, y: 0, status: 1, Type: randomType, glowVal: 0};
-        }
-        if (randomType.type === 5) {
-          const PowerUpType = getRandomPowerUp();
-          bricks[r][c].powerup = PowerUpType;
-          bricks[r][c].powerup.speed = 1;
+
+        if (brick.type === BrickType.BLUE) {
+          bricks[r][c].powerUp = getRandomPowerUp();
+          bricks[r][c].powerUp.speed = 1;
         }
 
       }
@@ -146,10 +140,10 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     /**
      * Track the user's clicks.
      */
-    canvas.addEventListener('mousedown', event => {
+    canvas.addEventListener('mousedown', () => {
       mousePressed = true;
     });
-    canvas.addEventListener('mouseup', event => {
+    canvas.addEventListener('mouseup', () => {
       mousePressed = false;
     });
 
@@ -219,7 +213,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
           break;
         case 'bottom-wall':
           lives--;
-          playSound('livelost');
+          Sounds.liveLost.play();
           if (lives <= 0) {
             // alert("GAME OVER");
             lives = 0;
@@ -241,9 +235,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
             if (b.status === 1) {
               const collisionPoint = checkBrickCollision(b);
               if (collisionPoint !== false) {
-                if (b.Type.type === 4) {
+                if (b.type === BrickType.SILVER) {
                   // if collides with an unbreakable brick
-                  playSound('metal');
+                  Sounds.metal.play();
                   if (collisionPoint === 'left' || collisionPoint === 'right') {
                     dx = -dx;
                   } else if (collisionPoint === 'top' || collisionPoint === 'bottom') {
@@ -251,8 +245,8 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                   }
                 } else {
                   b.status = 0;
-                  score += b.Type.toughness;
-                  playSound('brickBurnt');
+                  score += b.toughness;
+                  Sounds.brickBurnt.play();
                 }
                 // console.log("Collided Brick Type: " + b.type)
                 checkBallStatus();
@@ -264,44 +258,44 @@ export class GameRendererComponent implements OnInit, OnDestroy {
               // console.log(b.powerup);
               const powerupCollisionStatus = checkPowerUpCollision(b);
               if (powerupCollisionStatus === 'paddle') {
-                b.powerup.status = 0;
+                b.powerUp.status = 0;
                 // alert("collided with powerup");
-                if (b.powerup.type === 'fire') {
-                  activatePowerUp(b.powerup.type);
-                  let timer = b.powerup.timer;
+                if (b.powerUp.type === 'fire') {
+                  activatePowerUp(b.powerUp.type);
+                  let timer = b.powerUp.timer;
                   if (timer) {
                     clearTimeout(timer); // cancel the previous timer.
                     timer = null;
                   }
-                  b.powerup.timer = setTimeout(() => {
+                  b.powerUp.timer = setTimeout(() => {
                     deactivatePowerUp('fire');
                   }, 5000);
                 }
-                if (b.powerup.type === 'large') {
-                  activatePowerUp(b.powerup.type);
-                  let timer = b.powerup.timer;
+                if (b.powerUp.type === 'large') {
+                  activatePowerUp(b.powerUp.type);
+                  let timer = b.powerUp.timer;
                   if (timer) {
                     clearTimeout(timer); // cancel the previous timer.
                     timer = null;
                   }
-                  b.powerup.timer = setTimeout(() => {
+                  b.powerUp.timer = setTimeout(() => {
                     deactivatePowerUp('large');
                   }, 5000);
                 }
-                if (b.powerup.type === 'long') {
-                  activatePowerUp(b.powerup.type);
-                  let timer = b.powerup.timer;
+                if (b.powerUp.type === 'long') {
+                  activatePowerUp(b.powerUp.type);
+                  let timer = b.powerUp.timer;
                   if (timer) {
                     clearTimeout(timer); // cancel the previous timer.
                     timer = null;
                   }
-                  b.powerup.timer = setTimeout(() => {
+                  b.powerUp.timer = setTimeout(() => {
                     deactivatePowerUp('long');
                   }, 5000);
                 }
                 // console.log(b.powerup);
               } else if (powerupCollisionStatus === 'wall') {
-                b.powerup.status = 0;
+                b.powerUp.status = 0;
               }
               // else {
               //     b.powerup.status = 1;
@@ -330,20 +324,20 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                 }
 
                 // console.log("Collided Brick Type: " + b.type)
-                if (b.Type.type !== 4) { // check whether this is a nonbreakable brick
-                  playSound('brickNormal');
+                if (b.type !== BrickType.SILVER) { // check whether this is a nonbreakable brick
+                  Sounds.brickNormal.play();
                   b.glowVal = 30;
-                  if (b.Type.toughness < ballPower) {
-                    score += b.Type.toughness;
-                    b.Type.toughness = 0;
+                  if (b.toughness < ballPower) {
+                    score += b.toughness;
+                    b.toughness = 0;
                   } else {
-                    b.Type.toughness -= ballPower;
+                    b.toughness -= ballPower;
                     score += ballPower;
 
                   }
                   bar.widths = (maxBarWidth / totalBricks) * score;
-                  b.Type.path = getSpritePath(b.Type.type, true);
-                  if (b.Type.toughness <= 0) {
+                  b.isCracked = true;
+                  if (b.toughness <= 0) {
                     b.status = 0;
                   }
 
@@ -351,7 +345,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                   checkWinStatus();
 
                 } else {
-                  playSound('metal');
+                  Sounds.metal.play();
                 }
 
               }
@@ -361,44 +355,44 @@ export class GameRendererComponent implements OnInit, OnDestroy {
               // console.log(b.powerup);
               const powerupCollisionStatus = checkPowerUpCollision(b);
               if (powerupCollisionStatus === 'paddle') {
-                b.powerup.status = 0;
+                b.powerUp.status = 0;
                 // alert("collided with powerup");
-                if (b.powerup.type === 'fire') {
-                  activatePowerUp(b.powerup.type);
-                  let timer = b.powerup.timer;
+                if (b.powerUp.type === 'fire') {
+                  activatePowerUp(b.powerUp.type);
+                  let timer = b.powerUp.timer;
                   if (timer) {
                     clearTimeout(timer); // cancel the previous timer.
                     timer = null;
                   }
-                  b.powerup.timer = setTimeout(() => {
+                  b.powerUp.timer = setTimeout(() => {
                     deactivatePowerUp('fire');
                   }, 5000);
                 }
-                if (b.powerup.type === 'large') {
-                  activatePowerUp(b.powerup.type);
-                  let timer = b.powerup.timer;
+                if (b.powerUp.type === 'large') {
+                  activatePowerUp(b.powerUp.type);
+                  let timer = b.powerUp.timer;
                   if (timer) {
                     clearTimeout(timer); // cancel the previous timer.
                     timer = null;
                   }
-                  b.powerup.timer = setTimeout(() => {
+                  b.powerUp.timer = setTimeout(() => {
                     deactivatePowerUp('large');
                   }, 5000);
                 }
-                if (b.powerup.type === 'long') {
-                  activatePowerUp(b.powerup.type);
-                  let timer = b.powerup.timer;
+                if (b.powerUp.type === 'long') {
+                  activatePowerUp(b.powerUp.type);
+                  let timer = b.powerUp.timer;
                   if (timer) {
                     clearTimeout(timer); // cancel the previous timer.
                     timer = null;
                   }
-                  b.powerup.timer = setTimeout(() => {
+                  b.powerUp.timer = setTimeout(() => {
                     deactivatePowerUp('long');
                   }, 5000);
                 }
                 // console.log(b.powerup);
               } else if (powerupCollisionStatus === 'wall') {
-                b.powerup.status = 0;
+                b.powerUp.status = 0;
               }
               // else {
               //     b.powerup.status = 1;
@@ -414,18 +408,18 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     function activatePowerUp(powerup) {
       if (powerup === 'fire') {
         ballStatus = 'fire';
-        playSound('fire');
-        playSound('fire-voice');
+        Sounds.fire.play();
+        Sounds.fireVoice.play();
       }
       if (powerup === 'large') {
         ballSizeStatus = 'large';
-        playSound('large');
-        playSound('large-voice');
+        Sounds.large.play();
+        Sounds.largeVoice.play();
       }
       if (powerup === 'long') {
         paddleSizeStatus = 'long';
-        playSound('long');
-        playSound('long-voice');
+        Sounds.long.play();
+        Sounds.longVoice.play();
       }
     }
 
@@ -439,35 +433,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       } else if (powerup === 'long') {
         paddleSizeStatus = 'normal';
       }
-      playSound('downgrade');
-    }
-
-    function playSound(name) {
-      let Sound = null;
-      if (name === 'metal') {
-        Sound = new sound('./assets/metal.wav');
-      } else if (name === 'brickBurnt') {
-        Sound = new sound('./assets/explode.wav');
-      } else if (name === 'brickNormal') {
-        Sound = new sound('./assets/brick.wav');
-      } else if (name === 'fire') {
-        Sound = new sound('./assets/fire.mp3');
-      } else if (name === 'fire-voice') {
-        Sound = new sound('./assets/fireball-voice.wav');
-      } else if (name === 'large') {
-        Sound = new sound('./assets/large.wav');
-      } else if (name === 'large-voice') {
-        Sound = new sound('./assets/large-voice.wav');
-      } else if (name === 'long') {
-        Sound = new sound('./assets/long.wav');
-      } else if (name === 'long-voice') {
-        Sound = new sound('./assets/long-voice.wav');
-      } else if (name === 'livelost') {
-        Sound = new sound('./assets/livelost.wav');
-      } else if (name === 'downgrade') {
-        Sound = new sound('./assets/downgrade.wav');
-      }
-      Sound.play();
+      Sounds.downgrade.play();
     }
 
     function checkBallStatus() {
@@ -480,12 +446,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     }
 
     function checkWinStatus() {
-      if (score === totalBricks) {
-
-        return true;
-      } else {
-        return false;
-      }
+      return score === totalBricks;
     }
 
     function checkBrickCollision(brick) {
@@ -514,13 +475,13 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
       // console.log("in check powerupcollision");
       if (brick.status === 0) {
-        if (brick.Type.type === 5) {
-          if (brick.powerup.status === 1) {
+        if (brick.type === BrickType.BLUE) {
+          if (brick.powerUp.status === 1) {
             // console.log("Destroyed Type: " + brick.Type.type);
             // console.log(brick.powerup)
-            const powerupY = brick.powerup.y;
-            const powerupX = brick.powerup.x;
-            const powerupSize = brick.powerup.size;
+            const powerupY = brick.powerUp.y;
+            const powerupX = brick.powerUp.x;
+            const powerupSize = brick.powerUp.size;
             // console.log("Current PowerUp X: " + powerupX);
             // console.log("Current Paddle X: " + paddleX + " " + (paddleX+paddleWidth));
             // console.log("Current PowerUp Y: " + powerupY);
@@ -570,21 +531,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       }
     }
 
-    function drawWall() {
-
-    }
-
-    const backgroundImage = new Image();
-    backgroundImage.src = 'assets/background.jpg';
-
     function drawBackground() {
-      ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(Images.background, 0, 0, canvas.width, canvas.height);
     }
-
-    const ballImage = new Image();
-    ballImage.src = 'assets/ball.png';
-    const fireballImage = new Image();
-    fireballImage.src = 'assets/fireball.png';
 
     function drawBall() {
       setGlow(false);
@@ -595,9 +544,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       ctx.closePath();
       let image;
       if (ballStatus === 'fire') {
-        image = fireballImage;
+        image = Images.fireball;
       } else if (ballStatus === 'normal') {
-        image = ballImage;
+        image = Images.ball;
       }
       if (ballSizeStatus === 'large') {
         ballRadius = 15;
@@ -609,10 +558,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
     }
 
-    const paddleImage = new Image();
-    paddleImage.src = 'assets/paddle1.png';
-    const longPaddleImage = new Image();
-    longPaddleImage.src = 'assets/paddle2.png';
 
     function drawPaddle() {
       // ctx.beginPath();
@@ -623,7 +568,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       setGlow(false);
       let img;
       if (paddleSizeStatus === 'normal') {
-        img = paddleImage;
+        img = Images.paddle;
         paddleWidth = 95;
       } else if (paddleSizeStatus === 'long') {
         ctx.shadowBlur = 20;
@@ -633,7 +578,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.closePath();
-        img = longPaddleImage;
+        img = Images.longPaddle;
         paddleWidth = 125;
       }
       ctx.drawImage(img, paddleX, paddleY, paddleWidth, paddleHeight);
@@ -656,10 +601,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
           if (b) {
             if (b.status === 1) {
-              const brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft + bricks[r][0].offset;
-              const brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
-              b.x = brickX;
-              b.y = brickY;
               if (b.glowVal > 0) {
                 // setGlow(false);
                 animateGlow(b.glowVal);
@@ -668,21 +609,21 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                 setGlow(true);
               }
               ctx.beginPath();
-              ctx.rect(brickX, brickY, brickWidth, brickHeight);
-              ctx.fillStyle = b.Type.color;
+              ctx.rect(b.x, b.y, brickWidth, brickHeight);
+              ctx.fillStyle = '#000000';
               ctx.fill();
               ctx.closePath();
 
-              const img = getImage(b.Type.path);
+              const img = Images.bricks[b.type][b.isCracked ? 'cracked' : 'normal'];
               ctx.drawImage(img, b.x, b.y, brickWidth, brickHeight);
 
 
             } else {
-              if (b.Type.type === 5) {
+              if (b.type === BrickType.BLUE) {
                 drawPowerUp(b);
-                b.powerup.x = b.x + 0.5 * brickWidth - b.powerup.size;
-                b.powerup.y = b.y + b.powerup.speed;
-                b.powerup.speed += 2;
+                b.powerUp.x = b.x + 0.5 * brickWidth - b.powerUp.size;
+                b.powerUp.y = b.y + b.powerUp.speed;
+                b.powerUp.speed += 2;
               }
 
             }
@@ -693,12 +634,12 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     }
 
     function drawPowerUp(brick) {
-      if (brick.powerup.status === 1) {
-        const powerupDy = brick.powerup.speed;
+      if (brick.powerUp.status === 1) {
+        const powerupDy = brick.powerUp.speed;
         if (brick.y + powerupDy <= canvas.height) {
           ctx.beginPath();
-          ctx.rect(brick.powerup.x, brick.y + powerupDy, 20, 20);
-          ctx.fillStyle = brick.powerup.color;
+          ctx.rect(brick.powerUp.x, brick.y + powerupDy, 20, 20);
+          ctx.fillStyle = brick.powerUp.color;
           ctx.fill();
           ctx.closePath();
         }
@@ -791,9 +732,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         if (backgroundMusic) {
           backgroundMusic.stop();
           if (lives === 0) {
-            backgroundMusic = new sound('./assets/lose.mp3');
+            backgroundMusic = Sounds.lose;
           } else if (checkWinStatus() === true) {
-            backgroundMusic = new sound('./assets/win.mp3');
+            backgroundMusic = Sounds.win;
           }
           backgroundMusic.play();
           backgroundMusic = null;
@@ -835,9 +776,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         }
       }, () => {
         animate = () => {
-        }; //no need to render the play button anymore
+        }; // no need to render the play button anymore
         console.log('clicked Play');
-        startGame(null);
+        startGame();
       });
 
       let animate = () => {
@@ -850,13 +791,13 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       requestAnimationFrame(animate);
     }
 
-    function startGame(e) {
+    function startGame() {
       score = 0;
       lives = 3;
       mousePressed = false;
       // Initialize all the necessary sounds
-      backgroundMusic = new sound('./assets/music.wav');
-      backgroundMusic.playLoop();
+      backgroundMusic = Sounds.music;
+      backgroundMusic.loop();
       // Start Drawing
       draw();
       canvas.removeEventListener('mousedown', startGame);
@@ -879,7 +820,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       dy = 0;
     }
 
-    function resetSpeed(e) {
+    function resetSpeed() {
       mousePressed = false;
       setRandomDirection();
       console.log('dx: ' + dx + ' dy: ' + dy);
@@ -889,7 +830,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height); // this can be used as a laser upgrade!
       // drawPlayBtn();
-      collisionDetector();
+      if (lives) {
+        collisionDetector();
+      }
       drawBackground();
       drawBricks();
       drawBall();
@@ -934,40 +877,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       min = Math.ceil(min);
       max = Math.floor(max);
 
-      // console.log("Min: " + min);
-      // console.log("Max: " + max);
-
-      const randNum = Math.floor(Math.random() * (max - min + 1)) + min;
-      return randNum;
-    }
-
-    const imageCache = {};
-
-    function getImage(path) {
-      let image = imageCache[path];
-      if (!image) {
-        image = new Image();
-        image.src = path;
-        console.log('loaded image', image, 'from path', path);
-        imageCache[path] = image;
-      }
-      return image;
-    }
-
-    function getRandomType() {
-      const types = [
-        {type: 1, color: '#80ef10', toughness: 1, path: getSpritePath(1, false)},
-        {type: 2, color: '#f4f407', toughness: 2, path: getSpritePath(2, false)},
-        {type: 3, color: '#ed2009', toughness: 3, path: getSpritePath(3, false)},
-        {type: 4, color: '#8c9188', toughness: 100000, path: getSpritePath(4, false)},
-        {type: 5, color: '#2ae0ea', toughness: 3, path: getSpritePath(5, false)},
-      ];
-      // TODO: Set limit for each type
-
-      //
-      const index = getRandomInt2(0, types.length - 1);
-      // var index = 4;
-      return types[index];
+      return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     function getRandomPowerUp() {
@@ -984,14 +894,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 //    For random layout, check typeof element in the 2D array as "undefined" or not before proceeding to draw it
 //    Also, change column and row if possible
 //    Remove mouse mechanism if possible. It's too funny
-    function getSpritePath(type, isCracked) {
-      if (isCracked) {
-        return './assets/type' + type + 'cracked.png';
-      } else {
-        return './assets/type' + type + '.png';
-      }
-
-    }
 
     function setRandomDirection() {
       let randomX = getRandomInt2(-5, 5);
@@ -1077,45 +979,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       };
     }
 
-    function sound(src) {
-      this.sound = document.createElement('audio');
-      this.sound.src = src;
-      this.sound.setAttribute('preload', 'auto');
-      this.sound.setAttribute('controls', 'none');
-      this.sound.style.display = 'none';
-      document.body.appendChild(this.sound);
-      this.play = () => {
-        // this.sound.play();
-        const promise = this.sound.play();
-
-        if (promise !== undefined) {
-          promise.then(_ => {
-            // Autoplay started!
-          }).catch(error => {
-            // Autoplay was prevented.
-            // Show a "Play" button so that user can start playback.
-          });
-        }
-      };
-      this.playLoop = () => {
-        this.sound.loop = true;
-        const promise = this.sound.play();
-
-        if (promise !== undefined) {
-          promise.then(_ => {
-            // Autoplay started!
-          }).catch(error => {
-            console.log(error);
-            // Autoplay was prevented.
-            // Show a "Play" button so that user can start playback.
-          });
-        }
-      };
-      this.stop = () => {
-        this.sound.pause();
-      };
-    }
-
 // To do list: Set upgrades and drop items
 
 
@@ -1131,7 +994,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     let counter = 0;
     let particles = [];
 
-    function progressbar() {
+    function ProgressBar() {
       this.widths = 0;
       this.hue = 0;
       this.barX = (canvas.width - maxBarWidth) / 2;
@@ -1158,11 +1021,11 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       };
     }
 
-    function particle() {
+    function Particle() {
       this.x = bar.barX + bar.widths;
       this.y = bar.barY;
       this.status = 1;
-      this.vx = 0.8 + Math.random() * 1;
+      this.vx = 0.8 + Math.random();
       this.v = Math.random() * 5;
       this.g = 1 + Math.random() * 3;
       this.down = false;
@@ -1197,7 +1060,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       } else {
         bar.draw();
         for (let i = 0; i < particleNo; i += 10) {
-          particles.push(new particle());
+          particles.push(new Particle());
         }
       }
       update();
