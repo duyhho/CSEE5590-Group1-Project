@@ -207,9 +207,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     };
 
     function mouseMoveHandler(e) {
-      const relativeX = e.clientX - canvas.offsetLeft;
-      if (relativeX > 0 && relativeX < canvas.width) {
-        paddleX = relativeX - paddleWidth / 2;
+      const relativeX = paddleX + e.movementX;
+      if (relativeX > 0 && relativeX < canvas.width - paddleWidth) {
+        paddleX = relativeX;
       }
     }
 
@@ -771,6 +771,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         // play sound according to the situation
         if (backgroundMusic) {
           self.postHighScore(scores);
+          document.exitPointerLock();
           backgroundMusic.stop();
           if (lives === 0) {
             backgroundMusic = Sounds.lose;
@@ -840,6 +841,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
         // play sound according to the situation
         if (backgroundMusic) {
+          document.exitPointerLock();
           backgroundMusic.stop();
           if (lives === 0) {
             backgroundMusic = Sounds.lose;
@@ -915,6 +917,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       backgroundMusic = Sounds.music;
       backgroundMusic.loop();
       // Start Drawing
+      canvas.requestPointerLock();
       draw();
       canvas.removeEventListener('mousedown', startGame);
       // Reset position
