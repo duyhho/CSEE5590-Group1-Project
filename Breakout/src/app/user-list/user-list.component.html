@@ -1,12 +1,17 @@
 <div class="wrap">
   <table>
-    <thead>
-    <th colspan="2">High Scores</th>
-    </thead>
     <tbody>
-    <tr *ngFor="let user of getSortedScores()">
-      <td>{{user.name}}</td>
+    <tr>
+      <th>Rank</th>
+      <th>Score</th>
+      <th>Name</th>
+      <th>Date</th>
+    </tr>
+    <tr *ngFor="let user of getSortedScores(); index as i">
+      <td>{{i + 1}}</td>
       <td>{{user.score}}</td>
+      <td>{{user.name}}</td>
+      <td>{{getFormattedDate(user.timestamp)}}</td>
     </tr>
     </tbody>
   </table>

@@ -40,4 +40,14 @@ export class UserListComponent implements OnInit {
   getSortedScores() {
     return this.users.sort((a: User, b: User) => a.score > b.score ? -1 : b.score > a.score ? 1 : 0).slice(0, 10);
   }
+
+  getFormattedDate(timestamp) {
+    const date = new Date(1970, 0, 0);
+    date.setSeconds(timestamp.seconds);
+
+    return date.toDateString()
+      .split(' ')
+      .slice(1)
+      .join(' ');
+  }
 }

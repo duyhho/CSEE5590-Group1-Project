@@ -1,2 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
-@import url('https://fonts.googleapis.com/css?family=Gugi');
+@import url('https://fonts.googleapis.com/css?family=Gugi|Kalam|Nothing+You+Could+Do|Shadows+Into+Light|Yellowtail');
+
+body {
+  background: rgba(46, 49, 49, 1);
+  color: white;
+}
