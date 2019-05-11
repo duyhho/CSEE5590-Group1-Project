@@ -10,7 +10,7 @@ import {AppComponent} from './app.component';
 import {GameRendererComponent} from './game-engine/game-renderer.component';
 import {UserListComponent} from './user-list/user-list.component';
 import {AngularFirestore} from '@angular/fire/firestore';
-import {MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule} from '@angular/material';
+import {MatButtonModule, MatDialogModule, MatDividerModule, MatFormFieldModule, MatInputModule} from '@angular/material';
 import {UsernamePromptComponent} from './username-prompt/username-prompt.component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
@@ -34,6 +34,7 @@ import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
     MatInputModule,
     AngularFireModule.initializeApp(environment.firebaseConfig),
     AngularFireDatabaseModule,
+    MatDividerModule,
   ],
   providers: [AngularFirestore],
   bootstrap: [AppComponent],

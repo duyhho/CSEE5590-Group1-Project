@@ -13,7 +13,7 @@ export interface PromptData {
 })
 export class UsernamePromptComponent implements OnInit {
 
-  username = 'Your Name Here';
+  username = '';
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: PromptData) {
   }

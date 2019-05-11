@@ -1,0 +1,27 @@
+h1 {
+  font-family: Gugi, cursive;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin: 0;
+  text-align: center;
+}
+
+div {
+  text-align: center;
+  font-family: Gugi, cursive;
+  font-weight: bold;
+  font-size: xx-large;
+  margin-top: .84375em;
+}
+
+mat-dialog-content >>> mat-form-field {
+  width: 100%;
+}
+
+mat-dialog-actions {
+  padding: 0;
+}
+
+input {
+  width: 100%;
+}

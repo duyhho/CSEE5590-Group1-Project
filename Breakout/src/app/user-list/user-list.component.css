@@ -5,6 +5,7 @@
 table {
   margin-left: auto;
   margin-right: auto;
+  width: 700px;
 }
 
 th {
@@ -18,5 +19,4 @@ th {
 td {
   text-align: center;
   font-family: 'Nothing You Could Do', cursive;
-  width: 100px;
 }
