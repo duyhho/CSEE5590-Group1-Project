@@ -842,7 +842,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       const playWidth = 300;
       const playHeight = 80;
       const playX = (canvas.width - playWidth) / 2;
-      const playText = 'LET\'S BREAK SOME BRICKS!!';
+      const playText = 'Start';
       const playButton = new Button(playX, (canvas.height - playHeight) / 2, playWidth, playHeight, playText, {
         default: {
           top: '#1879BD'
