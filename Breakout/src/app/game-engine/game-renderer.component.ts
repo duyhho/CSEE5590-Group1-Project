@@ -972,7 +972,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
     function setRandomDirection() {
       let randomX = getRandomInt2(-5, 5);
-      while (Math.abs(randomX) > 0 && Math.abs(randomX) < 2) {
+      while (Math.abs(randomX) < 2) {
         randomX = getRandomInt2(-5, 5);
       }
       const randomY = getRandomInt2(4, 6);
