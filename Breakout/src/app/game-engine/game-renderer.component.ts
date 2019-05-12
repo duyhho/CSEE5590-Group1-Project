@@ -897,9 +897,13 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     }
 
     function resetSpeed() {
+      level = parseInt(localStorage.getItem('level'), 10) || 1;
+      const speed = Math.min(13, Math.max(level, 3)) + 2;
       mousePressed = false;
       setRandomDirection();
-      console.log('dx: ' + dx + ' dy: ' + dy);
+      const magnitude = Math.sqrt(dx * dx + dy * dy);
+      dx = dx / magnitude * speed;
+      dy = dy / magnitude * speed;
       canvas.removeEventListener('mousedown', resetSpeed);
     }
 
