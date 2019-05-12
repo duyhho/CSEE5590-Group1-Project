@@ -27,21 +27,17 @@ export class GameRendererComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
   }
 
-  postHighScore(score: number): void {
+  postHighScore(score: number, level: number): void {
     this.ngZone.run(() => {
-      console.log('post score', score);
       // this.userService.getUsers().toPromise().then(users => {
-      // console.log('got users', users);
       // const lastPlace = users[users.length - 1];
       // if (users.length < 10 || score > lastPlace.score) {
-      console.log('do the post!!');
       const dialogRef = this.dialog.open(UsernamePromptComponent, {
         width: '250px',
-        data: {score}
+        data: {score, level}
       });
 
       dialogRef.afterClosed().subscribe(result => {
-        console.log('result', result);
         if (result.name) {
           this.userService.createUser(result);
         }
@@ -118,10 +114,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       bricks[r] = [];
 
       const newColumn = getRandomInt(1, 5);
-      // var newColumn = 1;
-      setMargin(newColumn);
-      console.log('New Column: ' + newColumn);
-      // console.log(setMargin(newColumn));
 
       for (let c = 0; c < newColumn; c++) {
         const brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft + setMargin(newColumn);
@@ -130,10 +122,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         bricks[r][c] = brick;
 
         if (brick.type !== BrickType.SILVER) {
-          console.log('Countable Brick Type: ' + brick.type);
-
           totalBricks += brick.toughness;
-          // console.log("Current Required Score: " + totalBricks);
         }
 
         if (brick.type === BrickType.BLUE) {
@@ -143,19 +132,12 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
       }
     }
-    console.log('Total Bricks: ' + totalBricks);
-    console.log(bricks);
-// for(var c=0; c<brickColumnCount; c++) {
-//     bricks[c] = [];
-//     for(var r=0; r<brickRowCount; r++) {
-//         bricks[c][r] = { x: 0, y: 0, status: 1 };
-//     }
-// }
 
     document.addEventListener('keydown', keyDownHandler, false);
     document.addEventListener('keyup', keyUpHandler, false);
     document.addEventListener('mousemove', mouseMoveHandler, false);
-// mouse event variables
+
+    // mouse event variables
     const mousePosition = {
       x: 0,
       y: 0
@@ -282,14 +264,11 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                   scores += b.toughness;
                   Sounds.brickBurnt.play();
                 }
-                // console.log("Collided Brick Type: " + b.type)
                 checkBallStatus();
                 checkWinStatus();
 
               }
             } else {
-              // console.log("About to call check powerup");
-              // console.log(b.powerup);
               const powerupCollisionStatus = checkPowerUpCollision(b);
               if (powerupCollisionStatus === 'paddle') {
                 b.powerUp.status = 0;
@@ -327,7 +306,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                     deactivatePowerUp('long');
                   }, 5000);
                 }
-                // console.log(b.powerup);
               } else if (powerupCollisionStatus === 'wall') {
                 b.powerUp.status = 0;
               }
@@ -357,7 +335,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                   dy = -dy;
                 }
 
-                // console.log("Collided Brick Type: " + b.type)
                 if (b.type !== BrickType.SILVER) { // check whether this is a nonbreakable brick
                   Sounds.brickNormal.play();
                   b.glowVal = 30;
@@ -387,8 +364,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
               }
 
             } else {
-              // console.log("About to call check powerup");
-              // console.log(b.powerup);
               const powerupCollisionStatus = checkPowerUpCollision(b);
               if (powerupCollisionStatus === 'paddle') {
                 b.powerUp.status = 0;
@@ -426,7 +401,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                     deactivatePowerUp('long');
                   }, 5000);
                 }
-                // console.log(b.powerup);
               } else if (powerupCollisionStatus === 'wall') {
                 b.powerUp.status = 0;
               }
@@ -497,10 +471,8 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       }
       if (y + dy >= brick.y - ballRadius && y + dy <= brick.y + brickHeight + ballRadius) {
         if ((x + dx >= brick.x - ballRadius - Math.abs(dx)) && (x + dx <= brick.x - ballRadius)) {
-          // console.log('left');
           return 'left';
         } else if ((x + dx <= brick.x + brickWidth + ballRadius + Math.abs(dx)) && (x + dx >= brick.x + brickWidth + ballRadius)) {
-          // console.log('right');
           return 'right';
         }
       }
@@ -509,25 +481,14 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
     function checkPowerUpCollision(brick) {
 
-      // console.log("in check powerupcollision");
       if (brick.status === 0) {
         if (brick.type === BrickType.BLUE) {
           if (brick.powerUp.status === 1) {
-            // console.log("Destroyed Type: " + brick.Type.type);
-            // console.log(brick.powerup)
             const powerupY = brick.powerUp.y;
             const powerupX = brick.powerUp.x;
             const powerupSize = brick.powerUp.size;
-            // console.log("Current PowerUp X: " + powerupX);
-            // console.log("Current Paddle X: " + paddleX + " " + (paddleX+paddleWidth));
-            // console.log("Current PowerUp Y: " + powerupY);
-            // console.log("Current Paddle Y: " + paddleY);
-            // console.log(powerupSize);
-
 
             if (powerupX >= paddleX && (powerupX + powerupSize <= paddleX + paddleWidth)) {
-              // console.log("within x range!!!")
-
               if (powerupY + powerupSize >= paddleY) {
                 return 'paddle';
               }
@@ -752,8 +713,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
             top: '#7C14DD'
           }
         }, () => {
-          // console.log(animate);
-          console.log('clicked Play');
           canvas.addEventListener('mouseup', () => {
             document.location.reload();
           });
@@ -772,7 +731,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
         // play sound according to the situation
         if (backgroundMusic) {
-          self.postHighScore(scores);
+          self.postHighScore(scores, level);
           document.exitPointerLock();
           backgroundMusic.stop();
           if (lives === 0) {
@@ -823,8 +782,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
             top: '#7C14DD'
           }
         }, () => {
-          // console.log(animate);
-          console.log('clicked Play');
           canvas.addEventListener('mouseup', () => {
             document.location.reload();
           });
@@ -861,7 +818,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     function drawClickToStart() {
       // Ball not moving
       if (dx === 0 && dy === 0) {
-        // console.log("in drawClickToStart");
         ctx.font = '25px Arial';
         ctx.fillStyle = '#42f445';
         ctx.fillText('CLICK TO START LEVEL ' + level, x - 25 * 6, canvas.height / 2);
@@ -890,7 +846,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       }, () => {
         animate = () => {
         }; // no need to render the play button anymore
-        console.log('clicked Play');
         startGame();
       });
 
@@ -985,13 +940,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       min = Math.ceil(min);
       max = Math.floor(max);
 
-      // console.log("Min: " + min);
-      // console.log("Max: " + max);
-
       let randNum = Math.floor(Math.random() * (max - min + 1)) + min;
       while (randNum % 2 === 0) {
         randNum = Math.floor(Math.random() * (max - min + 1)) + min;
-        // console.log("new number: " + randNum);
       }
       return randNum;
     }

@@ -1,7 +1,7 @@
 <h1 mat-dialog-title>New High Score!</h1>
 <mat-divider></mat-divider>
 <mat-dialog-content>
-  <div>{{data.score}}</div>
+  <div>Level {{data.level}} - Score: {{data.score}}</div>
   <mat-form-field>
     <input matInput placeholder="Name" [(ngModel)]="username">
   </mat-form-field>

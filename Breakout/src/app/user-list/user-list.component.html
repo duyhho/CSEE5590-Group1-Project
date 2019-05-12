@@ -3,14 +3,16 @@
     <tbody>
     <tr>
       <th>Rank</th>
+      <th class="name">Name</th>
+      <th>Level</th>
       <th>Score</th>
-      <th>Name</th>
       <th>Date</th>
     </tr>
     <tr *ngFor="let user of getSortedScores(); index as i">
       <td>{{i + 1}}</td>
+      <td class="name">{{user.name}}</td>
+      <td>{{user.level}}</td>
       <td>{{user.score}}</td>
-      <td>{{user.name}}</td>
       <td>{{getFormattedDate(user.timestamp)}}</td>
     </tr>
     </tbody>

@@ -4,6 +4,7 @@ import {MAT_DIALOG_DATA} from '@angular/material';
 export interface PromptData {
   name: string;
   score: number;
+  level: number;
 }
 
 @Component({
