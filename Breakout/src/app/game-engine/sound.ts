@@ -1,33 +1,54 @@
 // Create a new audio context to work around Safari lag issue.
+const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioContext = new AudioContext();
+if (audioContext.state === 'suspended') {
+  const unlock = () => {
+    audioContext.resume().then(() => {
+      document.body.removeEventListener('mousedown', unlock);
+      document.body.removeEventListener('touchstart', unlock);
+      document.body.removeEventListener('touchend', unlock);
+    });
+  };
+
+  document.body.addEventListener('mousedown', unlock, false);
+  document.body.addEventListener('touchstart', unlock, false);
+  document.body.addEventListener('touchend', unlock, false);
+
+}
 
 export class Sound {
-  audio = new Audio();
-  track: AudioNode;
+  audioData: AudioBuffer;
+  sourceNode: AudioBufferSourceNode;
 
   constructor(path) {
-    this.audio = new Audio();
-    this.audio.src = path;
-    this.track = audioContext.createMediaElementSource(this.audio);
-    this.track.connect(audioContext.destination);
+    const request = new XMLHttpRequest();
+    request.open('GET', path, true);
+    request.responseType = 'arraybuffer';
+    request.onload = () => {
+      audioContext.decodeAudioData(request.response, buffer => {
+        this.audioData = buffer;
+      });
+    };
+    request.send();
   }
 
-  play() {
-    if (audioContext.state === 'suspended') {
-      audioContext.resume().then(() => {
-        this.play();
-      });
-    } else {
-      this.audio.play();
+  play(loop = false) {
+    if (this.sourceNode) {
+      this.sourceNode.stop(0);
     }
+    this.sourceNode = audioContext.createBufferSource();
+    this.sourceNode.buffer = this.audioData;
+    this.sourceNode.connect(audioContext.destination);
+    this.sourceNode.start(0);
+    this.sourceNode.loop = loop;
   }
 
   loop() {
-    this.audio.loop = true;
-    this.play();
+    this.play(true);
   }
 
   stop() {
-    this.audio.pause();
+    this.sourceNode.stop(0);
   }
+
 }
