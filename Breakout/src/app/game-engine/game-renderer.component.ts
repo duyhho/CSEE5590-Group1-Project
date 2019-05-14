@@ -50,22 +50,32 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
   run() {
     const canvas = this.canvasElement;
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+    const dpi = window.devicePixelRatio || 1;
+    canvas.width = canvasWidth * dpi;
+    canvas.height = canvasHeight * dpi;
+
     const ctx = canvas.getContext('2d');
+    ctx.scale(dpi, dpi);
+
     let ballRadius = 10;
     let dx = 0;
     let dy = 0;
     const paddleHeight = 20;
     let paddleWidth = 95;
-    let paddleX = (canvas.width - paddleWidth) / 2;
-    const paddleY = canvas.height - paddleHeight;
-    let x = canvas.width / 2;
+    let paddleX = (canvasWidth - paddleWidth) / 2;
+    const paddleY = canvasHeight - paddleHeight;
+    let x = canvasWidth / 2;
     let y = paddleY - ballRadius;
     let rightPressed = false;
     let leftPressed = false;
     const brickRowCount = 3;
     const maxbrickColumnCount = 5;
-    const brickWidth = canvas.width / 6;
-    const brickHeight = canvas.height / 12;
+    const brickWidth = canvasWidth / 6;
+    const brickHeight = canvasHeight / 12;
     const brickPadding = 10;
     const brickOffsetTop = 50;
     const brickOffsetLeft = 30;
@@ -92,8 +102,8 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 // Score board
     const boardWidth = 400;
     const boardHeight = 300;
-    const boardX = canvas.width / 2 - boardWidth / 2;
-    const boardY = canvas.height / 2 - boardHeight / 2;
+    const boardX = canvasWidth / 2 - boardWidth / 2;
+    const boardY = canvasHeight / 2 - boardHeight / 2;
 
 // Progress Bar
     const maxBarWidth = 250;
@@ -180,7 +190,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     }
 
     let checkPaddleMovement = () => {
-      if (rightPressed && paddleX < canvas.width - paddleWidth) {
+      if (rightPressed && paddleX < canvasWidth - paddleWidth) {
         paddleX += 7;
       } else if (leftPressed && paddleX > 0) {
         paddleX -= 7;
@@ -191,7 +201,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
     function mouseMoveHandler(e) {
       const relativeX = paddleX + e.movementX;
-      if (relativeX > 0 && relativeX < canvas.width - paddleWidth) {
+      if (relativeX > 0 && relativeX < canvasWidth - paddleWidth) {
         paddleX = relativeX;
       }
     }
@@ -494,7 +504,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                 return 'paddle';
               }
             }
-            if (powerupY + powerupSize > canvas.height) {
+            if (powerupY + powerupSize > canvasHeight) {
               return 'wall';
             }
           }
@@ -517,20 +527,20 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
     function checkWallCollision() {
       // Check for collision with walls
-      if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+      if (x + dx > canvasWidth - ballRadius || x + dx < ballRadius) {
         return 'side-wall';
       }
       if (y + dy < ballRadius) {
         return 'top-wall';
       }
-      if (y + dy > canvas.height - ballRadius) {
+      if (y + dy > canvasHeight - ballRadius) {
 
         return 'bottom-wall';
       }
     }
 
     function drawBackground() {
-      ctx.drawImage(Images.background, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(Images.background, 0, 0, canvasWidth, canvasHeight);
     }
 
     function drawBall() {
@@ -636,7 +646,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     function drawPowerUp(brick) {
       if (brick.powerUp.status === 1) {
         const powerupDy = brick.powerUp.speed;
-        if (brick.y + powerupDy <= canvas.height) {
+        if (brick.y + powerupDy <= canvasHeight) {
           ctx.beginPath();
           ctx.rect(brick.powerUp.x, brick.y + powerupDy, 20, 20);
           ctx.fillStyle = brick.powerUp.color;
@@ -664,7 +674,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       const fontSize = 27;
       ctx.font = fontSize + 'px Arial';
       ctx.fillStyle = '#0095DD';
-      ctx.fillText('Lives: ' + lives, canvas.width - fontSize * 4, fontSize);
+      ctx.fillText('Lives: ' + lives, canvasWidth - fontSize * 4, fontSize);
     }
 
     const self = this;
@@ -821,7 +831,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       if (dx === 0 && dy === 0) {
         ctx.font = '25px Arial';
         ctx.fillStyle = '#42f445';
-        ctx.fillText('CLICK TO START LEVEL ' + level, x - 25 * 6, canvas.height / 2);
+        ctx.fillText('CLICK TO START LEVEL ' + level, x - 25 * 6, canvasHeight / 2);
       }
 
       // requestAnimationFrame(drawClickToStart)
@@ -832,9 +842,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       ctx.font = '20px Arial';
       const playWidth = 300;
       const playHeight = 80;
-      const playX = (canvas.width - playWidth) / 2;
+      const playX = (canvasWidth - playWidth) / 2;
       const playText = 'Start';
-      const playButton = new Button(playX, (canvas.height - playHeight) / 2, playWidth, playHeight, playText, {
+      const playButton = new Button(playX, (canvasHeight - playHeight) / 2, playWidth, playHeight, playText, {
         default: {
           top: '#1879BD'
         },
@@ -890,9 +900,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
     function resetPosition() {
 
-      x = canvas.width / 2;
-      y = canvas.height - 30;
-      paddleX = (canvas.width - paddleWidth) / 2;
+      x = canvasWidth / 2;
+      y = canvasHeight - 30;
+      paddleX = (canvasWidth - paddleWidth) / 2;
       dx = 0;
       dy = 0;
     }
@@ -912,7 +922,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       if (localStorage.getItem('level') !== '1') {
         level = parseInt(localStorage.getItem('level'), 10) || 1;
       }
-      ctx.clearRect(0, 0, canvas.width, canvas.height); // this can be used as a laser upgrade!
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight); // this can be used as a laser upgrade!
       // drawPlayBtn();
       if (lives) {
         collisionDetector();
@@ -1077,7 +1087,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     function ProgressBar() {
       this.widths = 0;
       this.hue = 0;
-      this.barX = (canvas.width - maxBarWidth) / 2;
+      this.barX = (canvasWidth - maxBarWidth) / 2;
       this.barY = 5;
       this.draw = () => {
         ctx.fillStyle = 'hsla(' + this.hue + ', 100%, 40%, 1)';
@@ -1094,9 +1104,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
         ctx.font = fontSize + 'px Arial';
         ctx.fillStyle = 'white';
         if (parseInt(progressRate, 10) >= 100) {
-          ctx.fillText('Progress: ' + progressRate + '%', (canvas.width / 2 - fontSize * 3.3), fontSize);
+          ctx.fillText('Progress: ' + progressRate + '%', (canvasWidth / 2 - fontSize * 3.3), fontSize);
         } else {
-          ctx.fillText('Progress: ' + progressRate + '%', (canvas.width / 2 - fontSize * 3), fontSize);
+          ctx.fillText('Progress: ' + progressRate + '%', (canvasWidth / 2 - fontSize * 3), fontSize);
         }
       };
     }
