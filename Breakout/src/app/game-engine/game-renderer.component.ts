@@ -87,7 +87,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     let backgroundMusic;
     let level = 1;
     if (localStorage.getItem('level') !== '1') {
-      level = parseInt(localStorage.getItem('level'), 10);
+      level = parseInt(localStorage.getItem('level'), 10) || 1;
     }
     let levelChecker = true;
 
