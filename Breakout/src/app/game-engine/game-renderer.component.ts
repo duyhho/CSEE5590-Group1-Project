@@ -1,6 +1,7 @@
 import {Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Images, Sounds} from './assets';
 import {Brick, BrickType} from './brick';
+import {Particle} from './particle';
 import {UserService} from '../user/user.service';
 import {MatDialog} from '@angular/material';
 import {UsernamePromptComponent} from '../username-prompt/username-prompt.component';
@@ -1100,25 +1101,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       };
     }
 
-    function Particle() {
-      this.x = bar.barX + bar.widths;
-      this.y = bar.barY;
-      this.status = 1;
-      this.vx = 0.8 + Math.random();
-      this.v = Math.random() * 5;
-      this.g = 1 + Math.random() * 3;
-      this.down = false;
-
-      this.draw = () => {
-        ctx.fillStyle = 'hsla(' + (bar.hue + 0.3) + ', 100%, 40%, 1)';
-
-        const size = Math.random() * 3;
-        // console.log(bar.barX);
-        ctx.fillRect(this.x, this.y, size, size);
-      };
-    }
-
-
     function drawProgressBar() {
       counter++;
 
@@ -1139,7 +1121,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
       } else {
         bar.draw();
         for (let i = 0; i < particleNo; i += 10) {
-          particles.push(new Particle());
+          particles.push(new Particle(bar.barX + bar.widths, bar.barY + 25, bar.hue + 0.3));
         }
       }
       update();
@@ -1163,7 +1145,7 @@ export class GameRendererComponent implements OnInit, OnDestroy {
                 p.g -= 0.1;
               }
             }
-            p.draw();
+            p.draw(ctx);
           }
         }
       }
