@@ -1163,4 +1163,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
   }
 
+  fullscreen() {
+    this.canvasElement.requestFullscreen().then(() => {
+      this.canvasElement.requestPointerLock();
+    });
+  }
 }
