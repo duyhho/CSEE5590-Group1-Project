@@ -86,9 +86,10 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     const bricks: Brick[][] = [];
     let backgroundMusic;
     let level = 1;
-    if (localStorage.getItem('level') !== '1') {
-      level = parseInt(localStorage.getItem('level'), 10) || 1;
-    }
+    console.log(level);
+    // if (localStorage.getItem('level') !== '1') {
+    //   level = parseInt(localStorage.getItem('level'), 10) || 1;
+    // }
     let levelChecker = true;
 
 // Ball transformation
@@ -919,9 +920,9 @@ export class GameRendererComponent implements OnInit, OnDestroy {
     }
 
     function draw() {
-      if (localStorage.getItem('level') !== '1') {
-        level = parseInt(localStorage.getItem('level'), 10) || 1;
-      }
+      // if (localStorage.getItem('level') !== '1') {
+      //   level = parseInt(localStorage.getItem('level'), 10) || 1;
+      // }
       ctx.clearRect(0, 0, canvasWidth, canvasHeight); // this can be used as a laser upgrade!
       // drawPlayBtn();
       if (lives) {
@@ -1074,9 +1075,6 @@ export class GameRendererComponent implements OnInit, OnDestroy {
 
 //////////////////////////////////////////////////////////////////////////////////
     drawPlayBtn();
-// drawScoreBoard();
-// draw();
-
 
 /////////////////////////////// Progress Bar///////////////////////////////////////
     const particleNo = 10;

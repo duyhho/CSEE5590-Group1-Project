@@ -39,15 +39,14 @@ export function randomType() {
   const types = Object.keys(BrickType)
     .map(n => Number.parseInt(n, 10))
     .filter(n => !Number.isNaN(n));
-
-  const level = parseInt(localStorage.getItem('level'), 10) || 1;
+  const level = 1;
+  // const level = parseInt(localStorage.getItem('level'), 10) || 1;
   if (level === 1) {
     return types[getRandomInt2(0, types.length - 5)];
   }
   if (level === 2) {
     return types[getRandomInt2(0, types.length - 3)];
   }
-
   return types[getRandomInt2(0, types.length - 1)];
 }
 
